@@ -4,13 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
 <title>Simulatore Promozioni Cashback</title>
+<link rel="manifest" href="/simulatore-cashback/manifest.json">
+<meta name="theme-color" content="#0e0e1a">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<!-- Librerie per esportazione -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
-/* ... (stile invariato rispetto alla versione precedente, già ottimizzato) ... */
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
   --bg:#0e0e1a;
@@ -33,14 +33,11 @@
 }
 html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:13px;line-height:1.65}
 a{color:var(--cyan)}
-/* Layout */
 .wrap{max-width:840px;margin:0 auto;padding:10px;display:flex;flex-direction:column;gap:10px}
-/* Cards */
 .card{background:var(--card);border:1px solid var(--bdr);border-radius:var(--r);overflow:hidden}
 .ch{padding:13px 15px 9px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--bdr)}
 .ch h2{font-size:.88rem;font-weight:600;color:var(--bright);flex:1;letter-spacing:-.01em}
 .cb{padding:13px 15px 14px}
-/* Collapsible */
 details{background:var(--card);border:1px solid var(--bdr);border-radius:var(--r);overflow:hidden}
 details summary{list-style:none;padding:12px 15px;cursor:pointer;display:flex;align-items:center;gap:7px;font-size:.84rem;font-weight:600;color:var(--bright);user-select:none;-webkit-user-select:none;border-bottom:1px solid transparent}
 details[open] summary{border-bottom-color:var(--bdr)}
@@ -48,13 +45,11 @@ details summary::-webkit-details-marker{display:none}
 details summary::after{content:'▼';font-size:.6rem;color:var(--cyan);margin-left:auto;transition:transform .2s}
 details[open] summary::after{transform:rotate(180deg)}
 .det{padding:13px 15px 14px}
-/* Grid */
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:9px}
 .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px}
 .s2{grid-column:1/-1}
 @media(max-width:480px){.g2,.g3{grid-template-columns:1fr}.s2{grid-column:1}}
 @media(max-width:680px) and (min-width:481px){.g3{grid-template-columns:1fr 1fr}}
-/* Fields */
 .fld{display:flex;flex-direction:column;gap:3px}
 .fl{font-size:.68rem;font-weight:500;color:var(--text);letter-spacing:.03em}
 .fl[title]{border-bottom:1px dashed var(--dim);cursor:help}
@@ -73,7 +68,6 @@ select option{background:#0e0e1a}
 input[type=range]{accent-color:var(--cyan);width:100%;cursor:pointer;margin-top:4px}
 input[type=checkbox]{width:14px;height:14px;accent-color:var(--cyan);cursor:pointer;flex-shrink:0}
 .hint{font-size:.65rem;color:var(--dim);line-height:1.5;margin-top:2px}
-/* Buttons */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:8px 14px;border-radius:var(--r2);font-size:.76rem;font-weight:500;font-family:'Inter',sans-serif;cursor:pointer;border:1px solid;transition:all .15s;white-space:nowrap}
 .btn-p{background:var(--cyan);color:#020210;border-color:var(--cyan);font-weight:600}
 .btn-p:hover{background:#00dede}
@@ -83,64 +77,48 @@ input[type=checkbox]{width:14px;height:14px;accent-color:var(--cyan);cursor:poin
 .btn-g:hover{color:var(--text);border-color:var(--bdr2)}
 .btn:disabled{opacity:.35;cursor:not-allowed}
 .brow{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}
-/* Chips scrollable */
 .chips-container{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
 .chips{display:flex;flex-wrap:nowrap;gap:6px;padding-bottom:2px}
 .chip{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:20px;border:1px solid var(--bdr2);cursor:pointer;font-size:.68rem;font-weight:500;transition:all .15s;user-select:none;background:var(--inp);color:var(--dim);opacity:.55;white-space:nowrap}
 .chip.on{opacity:1;border-color:currentColor}
 .chip .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
 .ca{color:var(--green)}.cb2{color:var(--blue)}.cbase{color:var(--red)}.cga{color:var(--teal)}.cgb{color:var(--purple)}
-/* EV boxes */
 .ev-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:11px}
 @media(max-width:380px){.ev-row{grid-template-columns:1fr}}
 .ev-box{background:var(--inp);border:1px solid var(--bdr);border-radius:var(--r2);padding:9px 12px}
 .ev-lbl{font-size:.6rem;color:var(--dim);text-transform:uppercase;letter-spacing:.08em}
 .ev-val{font-family:'JetBrains Mono',monospace;font-size:1.1rem;font-weight:500;margin-top:3px}
 .ev-val.pos{color:var(--green)}.ev-val.neg{color:var(--red)}.ev-val.neu{color:var(--text)}
-/* Charts */
 #chart-wrap{position:relative;height:310px}
 @media(min-width:600px){#chart-wrap{height:380px}}
 .comp-wrap{position:relative;height:200px;margin-top:9px}
 .be-wrap{position:relative;height:190px;margin-top:10px}
-/* Section label */
 .slbl{font-size:.59rem;font-weight:600;color:var(--cyan);text-transform:uppercase;letter-spacing:.12em;margin-bottom:8px;margin-top:12px;display:flex;align-items:center;gap:5px}
 .slbl::before{content:'';width:3px;height:10px;background:var(--cyan);border-radius:2px;flex-shrink:0}
-/* Info strip */
 .istrip{background:rgba(0,200,200,.05);border:1px solid rgba(0,200,200,.15);border-radius:7px;padding:7px 10px;font-size:.68rem;color:var(--cyan);line-height:1.7;margin-top:8px}
 .istrip strong{color:var(--bright)}
-/* HR */
 .sep{border:none;border-top:1px solid var(--bdr);margin:11px 0}
-/* Tables */
 .tbl{width:100%;border-collapse:collapse;font-size:.7rem;margin-top:7px}
 .tbl th{background:var(--inp);color:var(--dim);font-weight:500;font-size:.6rem;letter-spacing:.06em;text-transform:uppercase;padding:6px 8px;text-align:left;border-bottom:1px solid var(--bdr2)}
 .tbl td{padding:5px 8px;border-bottom:1px solid var(--bdr);font-family:'JetBrains Mono',monospace;font-size:.69rem;color:var(--bright)}
 .tbl tr:last-child td{border-bottom:none}
 .td-dim{color:var(--dim)!important;font-size:.63rem!important}
-/* DD info strip */
 .dd-row{display:flex;gap:12px;flex-wrap:wrap;background:var(--inp);border:1px solid var(--bdr);border-radius:7px;padding:8px 11px;margin-top:8px}
 .dd-cell{display:flex;flex-direction:column;gap:1px}
 .dd-cell span:first-child{font-size:.58rem;color:var(--dim);text-transform:uppercase;letter-spacing:.06em}
 .dd-cell span:last-child{font-family:'JetBrains Mono',monospace;font-size:.75rem;color:var(--bright)}
-/* BE values */
 .be-pos{color:var(--green)}.be-neg{color:var(--red)}
-/* cbrow */
 .cbrow{display:flex;align-items:center;gap:7px}
 .cbrow label{font-size:.74rem;color:var(--text);cursor:pointer}
-/* Preset buttons */
 .presets{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}
-/* Spinner */
 .spin-ani{display:inline-block;width:11px;height:11px;border:2px solid var(--bdr2);border-top-color:var(--cyan);border-radius:50%;animation:sn .6s linear infinite}
 @keyframes sn{to{transform:rotate(360deg)}}
-/* Hidden */
 .hid{display:none!important}
-/* Header */
 .hdr{background:linear-gradient(160deg,#0c0c1a 0%,#111124 100%);border-bottom:1px solid var(--bdr);padding:16px 15px 13px}
 .hdr h1{font-size:clamp(1rem,4vw,1.35rem);font-weight:600;color:var(--bright);letter-spacing:-.02em}
 .hdr h1 em{color:var(--cyan);font-style:normal}
 .hdr p{margin-top:4px;font-size:.7rem;color:var(--dim);max-width:600px;line-height:1.6}
-/* Footer */
 footer{text-align:center;padding:16px 15px;color:var(--dim);font-size:.64rem;border-top:1px solid var(--bdr);line-height:2}
-/* scrollbar */
 ::-webkit-scrollbar{width:4px;height:4px}
 ::-webkit-scrollbar-track{background:var(--bg)}
 ::-webkit-scrollbar-thumb{background:var(--bdr2);border-radius:3px}
@@ -153,9 +131,6 @@ footer{text-align:center;padding:16px 15px;color:var(--dim);font-size:.64rem;bor
 </div>
 <div class="wrap">
 
-<!-- ══════════════════════════════════════════
-     IMPOSTAZIONI BASE
-══════════════════════════════════════════ -->
 <div class="card">
   <div class="ch"><h2>⚙️ Impostazioni</h2></div>
   <div class="cb">
@@ -193,14 +168,12 @@ footer{text-align:center;padding:16px 15px;color:var(--dim);font-size:.64rem;bor
       </div>
     </div>
 
-    <!-- STOP LOSS GLOBALE -->
     <div class="fld" style="margin-top:9px">
       <label class="fl" title="Se il saldo cumulato totale scende sotto questo valore, la simulazione si ferma (0 = nessun limite)">Stop Loss Globale (€) – opzionale</label>
       <input type="number" id="globalStopLoss" value="0" min="0" step="100">
       <div class="hint">Imposta 0 per disabilitare. Se il saldo totale scende sotto -X €, le promozioni successive non vengono giocate.</div>
     </div>
 
-    <!-- RTP — slot only -->
     <div id="rtpRow" class="fld" style="margin-top:9px">
       <label class="fl" title="Return To Player: percentuale teorica di ritorno sul lungo periodo">RTP slot (%)</label>
       <div style="display:flex;align-items:center;gap:8px">
@@ -209,7 +182,6 @@ footer{text-align:center;padding:16px 15px;color:var(--dim);font-size:.64rem;bor
       </div>
     </div>
 
-    <!-- Volatility presets — slot only -->
     <div id="volRow" style="margin-top:9px">
       <div class="slbl" style="margin-top:4px">Volatilità slot</div>
       <div class="presets">
@@ -220,14 +192,12 @@ footer{text-align:center;padding:16px 15px;color:var(--dim);font-size:.64rem;bor
       <div class="hint" id="volHint" style="margin-top:5px">Alta: σ=1.1 · P(zero)=90% · RTP 94.5% invariato</div>
     </div>
 
-    <!-- Roulette pWin — shown only for roulette -->
     <div id="rouletteRow" class="fld hid" style="margin-top:9px">
       <label class="fl" title="Probabilità di vincere un singolo colpo (roulette europea: 18/37 ≈ 0.4865)">Probabilità vittoria per spin (p)</label>
       <input type="number" id="pWin" value="0.48649" min="0" max="1" step="0.0001">
       <div class="hint">Roulette europea: 18/37 ≈ 0.48649 (include lo zero)</div>
     </div>
 
-    <!-- Info strip -->
     <div class="istrip" id="stratBadge" style="margin-top:10px">
       <strong>Moderata:</strong> <span id="badgeA">–</span> &nbsp;·&nbsp; <strong>Aggressiva:</strong> <span id="badgeB">–</span>
     </div>
@@ -239,9 +209,6 @@ footer{text-align:center;padding:16px 15px;color:var(--dim);font-size:.64rem;bor
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════
-     IMPOSTAZIONI AVANZATE
-══════════════════════════════════════════ -->
 <details id="advDet">
   <summary>🔧 Impostazioni Avanzate</summary>
   <div class="det">
@@ -263,7 +230,6 @@ footer{text-align:center;padding:16px 15px;color:var(--dim);font-size:.64rem;bor
         </select>
       </div>
     </div>
-    <!-- Solo turnover N -->
     <div id="fixedNRow" class="fld hid" style="margin-top:8px">
       <label class="fl" title="Numero massimo di spin da effettuare">N° max spin (solo per "solo turnover")</label>
       <div style="display:flex;gap:7px;align-items:center">
@@ -272,7 +238,6 @@ footer{text-align:center;padding:16px 15px;color:var(--dim);font-size:.64rem;bor
       </div>
       <div class="hint" id="fixedNHint"></div>
     </div>
-    <!-- Adaptive first spin -->
     <div id="adaptiveRow" class="fld hid" style="margin-top:8px">
       <label class="fl" title="Ammontare del primo spin (sarà forzato a essere ≥ TP)">Primo spin adattiva (€)</label>
       <div style="display:flex;gap:7px;align-items:center">
@@ -324,7 +289,6 @@ footer{text-align:center;padding:16px 15px;color:var(--dim);font-size:.64rem;bor
       </div>
     </div>
 
-    <!-- Slot advanced -->
     <div id="slotAdv">
       <hr class="sep">
       <div class="slbl">Slot — Parametri Avanzati</div>
@@ -340,7 +304,6 @@ footer{text-align:center;padding:16px 15px;color:var(--dim);font-size:.64rem;bor
       </div>
     </div>
 
-    <!-- Baccarat advanced -->
     <div id="bacAdv" class="hid">
       <hr class="sep">
       <div class="slbl">Baccarat — Scommessa</div>
@@ -353,7 +316,6 @@ footer{text-align:center;padding:16px 15px;color:var(--dim);font-size:.64rem;bor
       </div>
     </div>
 
-    <!-- CT/Mono advanced -->
     <div id="ctAdv" class="hid">
       <hr class="sep">
       <div class="slbl">Crazy Time / Monopoly — Parametri</div>
@@ -388,9 +350,6 @@ footer{text-align:center;padding:16px 15px;color:var(--dim);font-size:.64rem;bor
   </div>
 </details>
 
-<!-- ══════════════════════════════════════════
-     GRAFICO
-══════════════════════════════════════════ -->
 <div class="card">
   <div class="ch"><h2>📈 Saldo Cumulato</h2></div>
   <div class="cb">
@@ -404,7 +363,6 @@ footer{text-align:center;padding:16px 15px;color:var(--dim);font-size:.64rem;bor
         <div class="ev-val neu" id="evB">–</div>
       </div>
     </div>
-    <!-- Line toggles (scrollabili su mobile) -->
     <div class="chips-container">
       <div class="chips">
         <div class="chip ca on" id="chipA" onclick="toggleLine('A')">
@@ -425,14 +383,12 @@ footer{text-align:center;padding:16px 15px;color:var(--dim);font-size:.64rem;bor
       </div>
     </div>
     <div id="chart-wrap"><canvas id="mainChart"></canvas></div>
-    <!-- DD strip -->
     <div class="dd-row hid" id="ddStrip">
       <div class="dd-cell"><span>Drawdown max</span><span id="ddDepth">–</span></div>
       <div class="dd-cell"><span>Da promo</span><span id="ddStart">–</span></div>
       <div class="dd-cell"><span>Minimo a</span><span id="ddTrough">–</span></div>
       <div class="dd-cell"><span>Recovery</span><span id="ddRec">–</span></div>
     </div>
-    <!-- Controls + Export -->
     <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:9px;align-items:center">
       <button class="btn btn-g" id="btnZoomDD">🔍 Zoom drawdown</button>
       <button class="btn btn-g" id="btnResetZoom">↺ Reset</button>
@@ -446,9 +402,6 @@ footer{text-align:center;padding:16px 15px;color:var(--dim);font-size:.64rem;bor
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════
-     MONTE CARLO
-══════════════════════════════════════════ -->
 <details>
   <summary>🎲 Statistiche Monte Carlo</summary>
   <div class="det">
@@ -483,9 +436,6 @@ footer{text-align:center;padding:16px 15px;color:var(--dim);font-size:.64rem;bor
   </div>
 </details>
 
-<!-- ══════════════════════════════════════════
-     CONFRONTO VOLATILITÀ (slot only)
-══════════════════════════════════════════ -->
 <details id="compDet" class="hid">
   <summary>📊 Confronto Volatilità (Bassa / Media / Alta)</summary>
   <div class="det">
@@ -500,9 +450,6 @@ footer{text-align:center;padding:16px 15px;color:var(--dim);font-size:.64rem;bor
   </div>
 </details>
 
-<!-- ══════════════════════════════════════════
-     BREAK-EVEN RTP (slot only)
-══════════════════════════════════════════ -->
 <details id="beDet" class="hid">
   <summary>⚖️ Break-even RTP</summary>
   <div class="det">
@@ -525,16 +472,15 @@ footer{text-align:center;padding:16px 15px;color:var(--dim);font-size:.64rem;bor
   </div>
 </details>
 
-</div><!-- /wrap -->
+</div>
+
 <footer>
   Slot: RTP/σ/zeri personalizzabili &nbsp;·&nbsp; Baccarat: Tie = push &nbsp;·&nbsp; Crazy Time / Monopoly: puntata su "1"
 </footer>
 
 <script>
 "use strict";
-/* ══════════════════════════════════════════════════════
-   RNG
-══════════════════════════════════════════════════════ */
+
 let _rng = Math.random;
 const setRNG = fn => { _rng = fn; };
 const rng = () => _rng();
@@ -551,9 +497,6 @@ const randn = () => {
   return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);
 };
 
-/* ══════════════════════════════════════════════════════
-   UTILS
-══════════════════════════════════════════════════════ */
 const fmtEuro = n => {
   try { return new Intl.NumberFormat('it-IT',{maximumFractionDigits:0}).format(n); }
   catch { return String(Math.round(n)); }
@@ -588,9 +531,6 @@ function wilsonCI(k, n, z=1.96) {
   return [Math.max(0,c-h), Math.min(1,c+h)];
 }
 
-/* ══════════════════════════════════════════════════════
-   CONSTANTS
-══════════════════════════════════════════════════════ */
 const BAC_P_BANKER=0.4586, BAC_P_PLAYER=0.4462, BAC_P_TIE=0.0952, BAC_COMM=0.05;
 const CRAZY   = {factors:[1,2,3,5,10,15], probs:[0.85,0.08,0.04,0.02,0.009,0.001]};
 const MONOPOLY= {factors:[1,2,3,5,10,15], probs:[0.86,0.07,0.03,0.02,0.009,0.001]};
@@ -601,9 +541,6 @@ const VOL = {
   high: { slotSigma:1.1,  slotZeroProb:0.9  },
 };
 
-/* ══════════════════════════════════════════════════════
-   STATE
-══════════════════════════════════════════════════════ */
 const S = {
   sessions:1000, tpPercent:25, cashbackPercent:25, pWin:18/37,
   game:'slot', baccaratBet:'banker',
@@ -628,9 +565,6 @@ const S = {
   lineA:true, lineB:true, lineBase:true, lineGA:false, lineGB:false,
 };
 
-/* ══════════════════════════════════════════════════════
-   GAME MATH
-══════════════════════════════════════════════════════ */
 function baccaratProfit(stake, bet) {
   for(let i=0; i<200; i++) {
     const r = rng();
@@ -683,9 +617,6 @@ function spinProfit(stake, p) {
   }
 }
 
-/* ══════════════════════════════════════════════════════
-   STRATEGIES
-══════════════════════════════════════════════════════ */
 function promoSpinFisso(tpPct, cbPct, p, mode) {
   const S0 = Math.max(1, Math.floor(p.slotStakeMax));
   const tpAmt = (tpPct/100)*S0;
@@ -748,7 +679,6 @@ function promoA(tpPct, cbPct, p) {
     }
     return promoSpinFisso(tpPct, cbPct, p, p.fixedMode);
   }
-  // Roulette
   const tpR = (tpPct/100)*40;
   let profit = spinProfit(10, p);
   if(profit < tpR) profit += spinProfit(30, p);
@@ -765,9 +695,6 @@ function promoB(tpPct, cbPct, p, overrideMode) {
   return promoSpinSecco(p.slotStakeMax, tpPct, cbPct, p, overrideMode ?? p.seccoMode);
 }
 
-/* ══════════════════════════════════════════════════════
-   SIMULATION (con Stop Loss Globale)
-══════════════════════════════════════════════════════ */
 function computeDD(arr) {
   let peak=-Infinity, pkI=0, maxD=0, start=0, trI=0;
   for(let i=0;i<arr.length;i++){
@@ -841,9 +768,6 @@ function simulate(p) {
   };
 }
 
-/* ══════════════════════════════════════════════════════
-   MONTE CARLO
-══════════════════════════════════════════════════════ */
 function computeProfitProbs(p, horizons, trials) {
   const H = [...horizons].sort((a,b)=>a-b);
   const maxN = H[H.length-1];
@@ -907,9 +831,6 @@ function computeProfitProbs(p, horizons, trials) {
   };
 }
 
-/* ══════════════════════════════════════════════════════
-   BREAK-EVEN RTP
-══════════════════════════════════════════════════════ */
 function computeBreakEven(p, trialsPerPoint=1000) {
   if(p.game !== 'slot') return null;
   const grid=[];
@@ -941,9 +862,6 @@ function computeBreakEven(p, trialsPerPoint=1000) {
   return { grid, evA, evB, beA:findCrossing(evA), beB:findCrossing(evB) };
 }
 
-/* ══════════════════════════════════════════════════════
-   VOLATILITY COMPARISON
-══════════════════════════════════════════════════════ */
 function simulateVolComparison(p) {
   const presets = [
     { label:'Alta (σ=1.1)', color:'#ff5060', ...VOL.high },
@@ -957,9 +875,6 @@ function simulateVolComparison(p) {
   });
 }
 
-/* ══════════════════════════════════════════════════════
-   CHART HELPERS
-══════════════════════════════════════════════════════ */
 let mainChart=null, cChartA=null, cChartB=null, beChart=null;
 let result=null, viewRange=null;
 
@@ -1010,7 +925,6 @@ function updateMainChart() {
   const stepped = (S.game==='crazytime'||S.game==='monopoly') && S.useRealisticMultipliers;
   const lopt = stepped ? {stepped:'after'} : {tension:0.12};
   const ds = [];
-  const S0 = Math.max(1,Math.floor(S.slotStakeMax));
 
   if(S.lineA)    ds.push({label:`Moderata (EV: ${fmtEuro(Math.round(result.meanA))}€)`,data:cd.map(d=>d.A),borderColor:'#3ecf6a',backgroundColor:'transparent',borderWidth:2,pointRadius:0,...lopt});
   if(S.lineB)    ds.push({label:`Aggressiva (EV: ${fmtEuro(Math.round(result.meanB))}€)`,data:cd.map(d=>d.B),borderColor:'#4f8fff',backgroundColor:'transparent',borderWidth:2,pointRadius:0,...lopt});
@@ -1075,9 +989,6 @@ function updateBEChart(be) {
   beChart.update('none');
 }
 
-/* ══════════════════════════════════════════════════════
-   UI HELPERS
-══════════════════════════════════════════════════════ */
 function ev(n, id) {
   const el=document.getElementById(id);
   el.textContent = (n>0.05?'+':'')+fmtEuro(Math.round(n))+' €';
@@ -1201,9 +1112,6 @@ function toggleLine(key) {
   updateMainChart();
 }
 
-/* ══════════════════════════════════════════════════════
-   EXPORT CSV / EXCEL / PDF
-══════════════════════════════════════════════════════ */
 function getChartBase64(chart) {
   return chart?.canvas?.toDataURL('image/png') || '';
 }
@@ -1252,12 +1160,10 @@ async function exportPDF() {
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
   
-  // Titolo
   pdf.setFontSize(16);
   pdf.setTextColor(0, 200, 200);
   pdf.text("Simulatore Promozioni Cashback", 15, 20);
   
-  // Parametri principali
   pdf.setFontSize(10);
   pdf.setTextColor(80, 80, 120);
   const params = [
@@ -1269,23 +1175,19 @@ async function exportPDF() {
   pdf.text(params[1], 15, 37);
   pdf.text(params[2], 15, 44);
   
-  // Grafico principale
   const chartImg = getChartBase64(mainChart);
   if(chartImg) {
     pdf.addImage(chartImg, 'PNG', 15, 52, 270, 120);
   }
   
-  // Drawdown info
   const dd = S.ddTarget==='A' ? result.ddA : result.ddB;
   pdf.setFontSize(9);
   pdf.text(`Drawdown max (${S.ddTarget==='A'?'Moderata':'Aggressiva'}): ${fmtEuro(Math.round(dd.depth))}€ | Da promo #${dd.start+1} a #${dd.trough+1} | Recovery a #${dd.recovery+1}`, 15, 185);
   
-  // Statistiche Monte Carlo (se visibili)
   if(!document.getElementById('statsOut').classList.contains('hid')) {
     pdf.addPage();
     pdf.setFontSize(14);
     pdf.text("Statistiche Monte Carlo", 15, 20);
-    // ... (si potrebbe aggiungere la tabella ma è complesso, per ora solo testo)
     pdf.setFontSize(10);
     pdf.text("Vedi esportazione CSV/Excel per i dettagli completi.", 15, 30);
   }
@@ -1293,9 +1195,6 @@ async function exportPDF() {
   pdf.save('report_cashback.pdf');
 }
 
-/* ══════════════════════════════════════════════════════
-   MAIN RUN
-══════════════════════════════════════════════════════ */
 let _deb=null;
 function run() {
   setRNG(S.lockSeed ? mulberry32(S.seed) : Math.random);
@@ -1317,9 +1216,6 @@ function run() {
 }
 function sched(){ clearTimeout(_deb); _deb=setTimeout(run,260); }
 
-/* ══════════════════════════════════════════════════════
-   EVENT LISTENERS
-══════════════════════════════════════════════════════ */
 const $ = id => document.getElementById(id);
 
 function onN(id,fn){ $(id)?.addEventListener('change',e=>{fn(toNum(e.target.value));sched();}); }
@@ -1341,12 +1237,12 @@ onN('slotStakeMax', v=>{
   S.spin=clamp(S.spin,1,S.slotStakeMax);
   $('spin').value=S.spin;
   updateVisibility();
-  updateFixedNHint(); // BUGFIX
+  updateFixedNHint();
 });
 onN('spin', v=>{
   S.spin=clamp(Math.floor(v),1,Math.max(1,S.slotStakeMax));
   $('spin').value=S.spin;
-  updateFixedNHint(); // BUGFIX
+  updateFixedNHint();
 });
 onN('slotRTP', v=>{S.slotRTP=clamp(v,80,100)/100;});
 onN('slotSigma', v=>{S.slotSigma=clamp(v,0.05,3);});
@@ -1450,9 +1346,6 @@ $('btnRunBE')?.addEventListener('click',()=>{
   },10);
 });
 
-/* ══════════════════════════════════════════════════════
-   RENDER: STATS
-══════════════════════════════════════════════════════ */
 function renderStats(st) {
   $('statsInfo').textContent=`${fmtEuro(st.trials)} prove.`;
   $('statsOut').classList.remove('hid');
@@ -1499,9 +1392,6 @@ function renderBE(be) {
   }
 }
 
-/* ══════════════════════════════════════════════════════
-   INIT
-══════════════════════════════════════════════════════ */
 initMainChart();
 updateVisibility();
 updateSpinHint();
@@ -1511,5 +1401,12 @@ updateVolHint();
 highlightPreset();
 run();
 </script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/simulatore-cashback/service-worker.js');
+}
+</script>
+
 </body>
 </html>
