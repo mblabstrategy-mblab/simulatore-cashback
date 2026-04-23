@@ -1,0 +1,1515 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
+<title>Simulatore Promozioni Cashback</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<!-- Librerie per esportazione -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+/* ... (stile invariato rispetto alla versione precedente, già ottimizzato) ... */
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0e0e1a;
+  --card:#161624;
+  --card2:#1c1c2e;
+  --inp:#0a0a15;
+  --bdr:#222238;
+  --bdr2:#2e2e50;
+  --text:#7878a8;
+  --bright:#dde0ff;
+  --dim:#2e2e58;
+  --green:#3ecf6a;
+  --blue:#4f8fff;
+  --red:#ff3d5a;
+  --cyan:#00c8c8;
+  --purple:#a050f0;
+  --teal:#1ec890;
+  --amber:#e8a020;
+  --r:12px;--r2:8px;
+}
+html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:13px;line-height:1.65}
+a{color:var(--cyan)}
+/* Layout */
+.wrap{max-width:840px;margin:0 auto;padding:10px;display:flex;flex-direction:column;gap:10px}
+/* Cards */
+.card{background:var(--card);border:1px solid var(--bdr);border-radius:var(--r);overflow:hidden}
+.ch{padding:13px 15px 9px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--bdr)}
+.ch h2{font-size:.88rem;font-weight:600;color:var(--bright);flex:1;letter-spacing:-.01em}
+.cb{padding:13px 15px 14px}
+/* Collapsible */
+details{background:var(--card);border:1px solid var(--bdr);border-radius:var(--r);overflow:hidden}
+details summary{list-style:none;padding:12px 15px;cursor:pointer;display:flex;align-items:center;gap:7px;font-size:.84rem;font-weight:600;color:var(--bright);user-select:none;-webkit-user-select:none;border-bottom:1px solid transparent}
+details[open] summary{border-bottom-color:var(--bdr)}
+details summary::-webkit-details-marker{display:none}
+details summary::after{content:'▼';font-size:.6rem;color:var(--cyan);margin-left:auto;transition:transform .2s}
+details[open] summary::after{transform:rotate(180deg)}
+.det{padding:13px 15px 14px}
+/* Grid */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px}
+.s2{grid-column:1/-1}
+@media(max-width:480px){.g2,.g3{grid-template-columns:1fr}.s2{grid-column:1}}
+@media(max-width:680px) and (min-width:481px){.g3{grid-template-columns:1fr 1fr}}
+/* Fields */
+.fld{display:flex;flex-direction:column;gap:3px}
+.fl{font-size:.68rem;font-weight:500;color:var(--text);letter-spacing:.03em}
+.fl[title]{border-bottom:1px dashed var(--dim);cursor:help}
+select,input[type=number]{
+  background:var(--inp);border:1px solid var(--bdr2);border-radius:6px;
+  color:var(--bright);font-family:'JetBrains Mono',monospace;font-size:.78rem;
+  padding:7px 9px;outline:none;width:100%;transition:border-color .15s;
+  -webkit-appearance:none;appearance:none
+}
+select{
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234040a0' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 7px center;background-size:13px;padding-right:24px
+}
+select:focus,input:focus{border-color:var(--cyan)}
+select option{background:#0e0e1a}
+input[type=range]{accent-color:var(--cyan);width:100%;cursor:pointer;margin-top:4px}
+input[type=checkbox]{width:14px;height:14px;accent-color:var(--cyan);cursor:pointer;flex-shrink:0}
+.hint{font-size:.65rem;color:var(--dim);line-height:1.5;margin-top:2px}
+/* Buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:8px 14px;border-radius:var(--r2);font-size:.76rem;font-weight:500;font-family:'Inter',sans-serif;cursor:pointer;border:1px solid;transition:all .15s;white-space:nowrap}
+.btn-p{background:var(--cyan);color:#020210;border-color:var(--cyan);font-weight:600}
+.btn-p:hover{background:#00dede}
+.btn-s{background:transparent;color:var(--text);border-color:var(--bdr2)}
+.btn-s:hover{border-color:var(--cyan);color:var(--bright)}
+.btn-g{background:transparent;color:var(--dim);border-color:var(--bdr);font-size:.7rem;padding:5px 10px}
+.btn-g:hover{color:var(--text);border-color:var(--bdr2)}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.brow{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}
+/* Chips scrollable */
+.chips-container{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+.chips{display:flex;flex-wrap:nowrap;gap:6px;padding-bottom:2px}
+.chip{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:20px;border:1px solid var(--bdr2);cursor:pointer;font-size:.68rem;font-weight:500;transition:all .15s;user-select:none;background:var(--inp);color:var(--dim);opacity:.55;white-space:nowrap}
+.chip.on{opacity:1;border-color:currentColor}
+.chip .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.ca{color:var(--green)}.cb2{color:var(--blue)}.cbase{color:var(--red)}.cga{color:var(--teal)}.cgb{color:var(--purple)}
+/* EV boxes */
+.ev-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:11px}
+@media(max-width:380px){.ev-row{grid-template-columns:1fr}}
+.ev-box{background:var(--inp);border:1px solid var(--bdr);border-radius:var(--r2);padding:9px 12px}
+.ev-lbl{font-size:.6rem;color:var(--dim);text-transform:uppercase;letter-spacing:.08em}
+.ev-val{font-family:'JetBrains Mono',monospace;font-size:1.1rem;font-weight:500;margin-top:3px}
+.ev-val.pos{color:var(--green)}.ev-val.neg{color:var(--red)}.ev-val.neu{color:var(--text)}
+/* Charts */
+#chart-wrap{position:relative;height:310px}
+@media(min-width:600px){#chart-wrap{height:380px}}
+.comp-wrap{position:relative;height:200px;margin-top:9px}
+.be-wrap{position:relative;height:190px;margin-top:10px}
+/* Section label */
+.slbl{font-size:.59rem;font-weight:600;color:var(--cyan);text-transform:uppercase;letter-spacing:.12em;margin-bottom:8px;margin-top:12px;display:flex;align-items:center;gap:5px}
+.slbl::before{content:'';width:3px;height:10px;background:var(--cyan);border-radius:2px;flex-shrink:0}
+/* Info strip */
+.istrip{background:rgba(0,200,200,.05);border:1px solid rgba(0,200,200,.15);border-radius:7px;padding:7px 10px;font-size:.68rem;color:var(--cyan);line-height:1.7;margin-top:8px}
+.istrip strong{color:var(--bright)}
+/* HR */
+.sep{border:none;border-top:1px solid var(--bdr);margin:11px 0}
+/* Tables */
+.tbl{width:100%;border-collapse:collapse;font-size:.7rem;margin-top:7px}
+.tbl th{background:var(--inp);color:var(--dim);font-weight:500;font-size:.6rem;letter-spacing:.06em;text-transform:uppercase;padding:6px 8px;text-align:left;border-bottom:1px solid var(--bdr2)}
+.tbl td{padding:5px 8px;border-bottom:1px solid var(--bdr);font-family:'JetBrains Mono',monospace;font-size:.69rem;color:var(--bright)}
+.tbl tr:last-child td{border-bottom:none}
+.td-dim{color:var(--dim)!important;font-size:.63rem!important}
+/* DD info strip */
+.dd-row{display:flex;gap:12px;flex-wrap:wrap;background:var(--inp);border:1px solid var(--bdr);border-radius:7px;padding:8px 11px;margin-top:8px}
+.dd-cell{display:flex;flex-direction:column;gap:1px}
+.dd-cell span:first-child{font-size:.58rem;color:var(--dim);text-transform:uppercase;letter-spacing:.06em}
+.dd-cell span:last-child{font-family:'JetBrains Mono',monospace;font-size:.75rem;color:var(--bright)}
+/* BE values */
+.be-pos{color:var(--green)}.be-neg{color:var(--red)}
+/* cbrow */
+.cbrow{display:flex;align-items:center;gap:7px}
+.cbrow label{font-size:.74rem;color:var(--text);cursor:pointer}
+/* Preset buttons */
+.presets{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}
+/* Spinner */
+.spin-ani{display:inline-block;width:11px;height:11px;border:2px solid var(--bdr2);border-top-color:var(--cyan);border-radius:50%;animation:sn .6s linear infinite}
+@keyframes sn{to{transform:rotate(360deg)}}
+/* Hidden */
+.hid{display:none!important}
+/* Header */
+.hdr{background:linear-gradient(160deg,#0c0c1a 0%,#111124 100%);border-bottom:1px solid var(--bdr);padding:16px 15px 13px}
+.hdr h1{font-size:clamp(1rem,4vw,1.35rem);font-weight:600;color:var(--bright);letter-spacing:-.02em}
+.hdr h1 em{color:var(--cyan);font-style:normal}
+.hdr p{margin-top:4px;font-size:.7rem;color:var(--dim);max-width:600px;line-height:1.6}
+/* Footer */
+footer{text-align:center;padding:16px 15px;color:var(--dim);font-size:.64rem;border-top:1px solid var(--bdr);line-height:2}
+/* scrollbar */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--bdr2);border-radius:3px}
+</style>
+</head>
+<body>
+<div class="hdr">
+  <h1>Simulatore <em>Promozioni Cashback</em></h1>
+  <p>Confronta Strategia Moderata vs Aggressiva su roulette, slot, Baccarat, Crazy Time e Monopoly. Clicca le linee nel grafico per attivarle/disattivarle.</p>
+</div>
+<div class="wrap">
+
+<!-- ══════════════════════════════════════════
+     IMPOSTAZIONI BASE
+══════════════════════════════════════════ -->
+<div class="card">
+  <div class="ch"><h2>⚙️ Impostazioni</h2></div>
+  <div class="cb">
+    <div class="g2">
+      <div class="fld s2">
+        <label class="fl" title="Seleziona il tipo di gioco su cui applicare la promozione">Modalità gioco</label>
+        <select id="game">
+          <option value="roulette">Roulette (rosso/nero, include zero)</option>
+          <option value="slot" selected>Slot (RTP/volatilità personalizzabili)</option>
+          <option value="baccarat">Baccarat (Banker/Player, Tie = push)</option>
+          <option value="crazytime">Crazy Time – puntata su "1"</option>
+          <option value="monopoly">Monopoly Live – puntata su "1"</option>
+        </select>
+      </div>
+      <div class="fld">
+        <label class="fl" title="Numero di promozioni (sessioni) simulate">Numero promozioni</label>
+        <input type="number" id="sessions" value="1000" min="100" step="500">
+      </div>
+      <div class="fld">
+        <label class="fl" title="Percentuale di cashback sulla perdita di ogni promozione">Cashback % sulla perdita</label>
+        <input type="number" id="cashbackPercent" value="25" min="0" max="100" step="1">
+      </div>
+      <div class="fld">
+        <label class="fl" title="Obiettivo di profitto in % dello stake (es. 25% su 100€ = stop a +25€)">Take profit % sullo stake</label>
+        <input type="number" id="tpPercent" value="25" min="0" max="200" step="1">
+      </div>
+      <div class="fld" id="stakeField">
+        <label class="fl" title="Capitale massimo a disposizione per ogni promozione">Stake massimo (€)</label>
+        <input type="number" id="slotStakeMax" value="100" min="1" step="1">
+      </div>
+      <div class="fld" id="spinField">
+        <label class="fl" title="Ammontare di ogni singolo spin nella strategia moderata">Spin (€) — Strategia Moderata</label>
+        <input type="number" id="spin" value="25" min="1" step="1">
+        <div class="hint" id="spinHint">4 spin da 25 € = 100 €</div>
+      </div>
+    </div>
+
+    <!-- STOP LOSS GLOBALE -->
+    <div class="fld" style="margin-top:9px">
+      <label class="fl" title="Se il saldo cumulato totale scende sotto questo valore, la simulazione si ferma (0 = nessun limite)">Stop Loss Globale (€) – opzionale</label>
+      <input type="number" id="globalStopLoss" value="0" min="0" step="100">
+      <div class="hint">Imposta 0 per disabilitare. Se il saldo totale scende sotto -X €, le promozioni successive non vengono giocate.</div>
+    </div>
+
+    <!-- RTP — slot only -->
+    <div id="rtpRow" class="fld" style="margin-top:9px">
+      <label class="fl" title="Return To Player: percentuale teorica di ritorno sul lungo periodo">RTP slot (%)</label>
+      <div style="display:flex;align-items:center;gap:8px">
+        <input type="number" id="slotRTP" value="94.5" min="80" max="100" step="0.1" style="width:90px;flex-shrink:0">
+        <span class="hint">Default 94.5% — rimane fisso al cambio di volatilità</span>
+      </div>
+    </div>
+
+    <!-- Volatility presets — slot only -->
+    <div id="volRow" style="margin-top:9px">
+      <div class="slbl" style="margin-top:4px">Volatilità slot</div>
+      <div class="presets">
+        <button class="btn btn-g" id="presetLow">📉 Bassa</button>
+        <button class="btn btn-g" id="presetMed">📊 Media</button>
+        <button class="btn btn-g" id="presetHigh" style="border-color:var(--bdr2);color:var(--text)">📈 Alta ✓</button>
+      </div>
+      <div class="hint" id="volHint" style="margin-top:5px">Alta: σ=1.1 · P(zero)=90% · RTP 94.5% invariato</div>
+    </div>
+
+    <!-- Roulette pWin — shown only for roulette -->
+    <div id="rouletteRow" class="fld hid" style="margin-top:9px">
+      <label class="fl" title="Probabilità di vincere un singolo colpo (roulette europea: 18/37 ≈ 0.4865)">Probabilità vittoria per spin (p)</label>
+      <input type="number" id="pWin" value="0.48649" min="0" max="1" step="0.0001">
+      <div class="hint">Roulette europea: 18/37 ≈ 0.48649 (include lo zero)</div>
+    </div>
+
+    <!-- Info strip -->
+    <div class="istrip" id="stratBadge" style="margin-top:10px">
+      <strong>Moderata:</strong> <span id="badgeA">–</span> &nbsp;·&nbsp; <strong>Aggressiva:</strong> <span id="badgeB">–</span>
+    </div>
+
+    <div class="brow">
+      <button class="btn btn-p" id="btnRefresh">↺ Nuova simulazione</button>
+      <button class="btn btn-s" id="btnRecalc">Ricalcola</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     IMPOSTAZIONI AVANZATE
+══════════════════════════════════════════ -->
+<details id="advDet">
+  <summary>🔧 Impostazioni Avanzate</summary>
+  <div class="det">
+
+    <div class="slbl">Strategia Moderata — Schema</div>
+    <div class="g2">
+      <div class="fld">
+        <label class="fl" title="Modalità di distribuzione dello stake">Schema</label>
+        <select id="slotAScheme">
+          <option value="fixed" selected>Spin fisso · TP/SL (default)</option>
+          <option value="adaptive">Adattiva (Primo ≥ TP; Secondo = resto)</option>
+        </select>
+      </div>
+      <div class="fld">
+        <label class="fl" title="Criterio di stop per lo schema fisso">Logica schema fisso</label>
+        <select id="fixedMode">
+          <option value="tp_or_ruin" selected>TP / stop-loss (saldo ≥ spin) — default</option>
+          <option value="turnover_once">Solo turnover (max n spin)</option>
+        </select>
+      </div>
+    </div>
+    <!-- Solo turnover N -->
+    <div id="fixedNRow" class="fld hid" style="margin-top:8px">
+      <label class="fl" title="Numero massimo di spin da effettuare">N° max spin (solo per "solo turnover")</label>
+      <div style="display:flex;gap:7px;align-items:center">
+        <input type="number" id="slotAFixedN" value="4" min="1" step="1" style="width:70px;flex-shrink:0">
+        <input type="range" id="slotAFixedNR" min="1" max="10" value="4" style="flex:1">
+      </div>
+      <div class="hint" id="fixedNHint"></div>
+    </div>
+    <!-- Adaptive first spin -->
+    <div id="adaptiveRow" class="fld hid" style="margin-top:8px">
+      <label class="fl" title="Ammontare del primo spin (sarà forzato a essere ≥ TP)">Primo spin adattiva (€)</label>
+      <div style="display:flex;gap:7px;align-items:center">
+        <input type="number" id="slotFirstSpin" value="25" min="1" step="1" style="width:70px;flex-shrink:0">
+        <input type="range" id="slotFirstSpinR" min="1" max="100" value="25" style="flex:1">
+      </div>
+      <div class="hint" id="adaptiveHint"></div>
+    </div>
+
+    <hr class="sep">
+    <div class="slbl">Strategia Aggressiva — Logica</div>
+    <div class="fld">
+      <label class="fl" title="Come viene giocato lo stake intero">Modalità spin secco</label>
+      <select id="seccoMode">
+        <option value="tp_or_ruin" selected>TP / stop-loss (saldo ≥ stake) — default</option>
+        <option value="turnover_once">Solo 1 colpo (turnover = stake)</option>
+      </select>
+    </div>
+
+    <hr class="sep">
+    <div class="slbl">Ghost Lines (tratteggiate)</div>
+    <div class="g2">
+      <div class="cbrow">
+        <input type="checkbox" id="chkGhostA">
+        <label for="chkGhostA" title="Mostra linea Moderata con logica alternativa (turnover vs TP/SL)">Ghost Moderata (logica alternativa)</label>
+      </div>
+      <div class="cbrow">
+        <input type="checkbox" id="chkGhostB">
+        <label for="chkGhostB" title="Mostra linea Aggressiva con logica alternativa (1 colpo vs TP/SL)">Ghost Aggressiva (logica alternativa)</label>
+      </div>
+    </div>
+
+    <hr class="sep">
+    <div class="slbl">Baseline &amp; Drawdown</div>
+    <div class="g2">
+      <div class="fld">
+        <label class="fl" title="Quale strategia usare come riferimento senza cashback">Baseline (senza cashback)</label>
+        <select id="baselineStrategy">
+          <option value="B" selected>Versione aggressiva (senza CB)</option>
+          <option value="A">Versione moderata (senza CB)</option>
+        </select>
+      </div>
+      <div class="fld">
+        <label class="fl" title="Su quale strategia calcolare i dati di drawdown">Target zoom drawdown</label>
+        <select id="ddTarget">
+          <option value="A">Moderata</option>
+          <option value="B" selected>Aggressiva</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Slot advanced -->
+    <div id="slotAdv">
+      <hr class="sep">
+      <div class="slbl">Slot — Parametri Avanzati</div>
+      <div class="g2">
+        <div class="fld">
+          <label class="fl" title="Deviazione standard del logaritmo del payout (maggiore = più volatile)">Volatilità σ (lognorm.)</label>
+          <input type="number" id="slotSigma" value="1.1" min="0.05" max="3" step="0.05">
+        </div>
+        <div class="fld">
+          <label class="fl" title="Probabilità che lo spin risulti in una perdita totale (payout zero)">P(zero payout)</label>
+          <input type="number" id="slotZeroProb" value="0.9" min="0" max="0.99" step="0.01">
+        </div>
+      </div>
+    </div>
+
+    <!-- Baccarat advanced -->
+    <div id="bacAdv" class="hid">
+      <hr class="sep">
+      <div class="slbl">Baccarat — Scommessa</div>
+      <div class="fld">
+        <select id="baccaratBet">
+          <option value="banker" selected>Banker (0.95:1 — comm. 5%)</option>
+          <option value="player">Player (1:1)</option>
+        </select>
+        <div class="hint">Tie = push, la mano viene ripetuta (max 200 iter.)</div>
+      </div>
+    </div>
+
+    <!-- CT/Mono advanced -->
+    <div id="ctAdv" class="hid">
+      <hr class="sep">
+      <div class="slbl">Crazy Time / Monopoly — Parametri</div>
+      <div class="g3">
+        <div class="fld">
+          <label class="fl" title="Return To Player della puntata sul numero 1">RTP "1"</label>
+          <input type="number" id="ctOneRTP" value="0.9608" min="0.8" max="0.99" step="0.0001">
+        </div>
+        <div class="fld">
+          <label class="fl" title="Numero di settori con esito '1' sulla ruota">Settori "1"</label>
+          <input type="number" id="ctOneSegments" value="21" min="1" max="54">
+        </div>
+        <div class="fld">
+          <label class="fl" title="Numero totale di settori della ruota">Settori totali</label>
+          <input type="number" id="ctWheelSegments" value="54" min="1">
+        </div>
+      </div>
+      <div class="cbrow" style="margin-top:8px">
+        <input type="checkbox" id="useRealisticMultipliers" checked>
+        <label for="useRealisticMultipliers" title="Utilizza distribuzione realistica dei moltiplicatori (2,3,5,10,15)">Moltiplicatori realistici (scalini, RTP invariato)</label>
+      </div>
+    </div>
+
+    <hr class="sep">
+    <div class="slbl">Riproducibilità</div>
+    <div class="g2">
+      <div class="fld">
+        <div class="cbrow"><input type="checkbox" id="lockSeed"><label for="lockSeed" title="Fissa il generatore casuale per risultati ripetibili">Blocca seed</label></div>
+        <input type="number" id="seed" value="123456789" style="margin-top:6px">
+      </div>
+    </div>
+  </div>
+</details>
+
+<!-- ══════════════════════════════════════════
+     GRAFICO
+══════════════════════════════════════════ -->
+<div class="card">
+  <div class="ch"><h2>📈 Saldo Cumulato</h2></div>
+  <div class="cb">
+    <div class="ev-row">
+      <div class="ev-box">
+        <div class="ev-lbl">EV/promo · Moderata</div>
+        <div class="ev-val neu" id="evA">–</div>
+      </div>
+      <div class="ev-box">
+        <div class="ev-lbl">EV/promo · Aggressiva</div>
+        <div class="ev-val neu" id="evB">–</div>
+      </div>
+    </div>
+    <!-- Line toggles (scrollabili su mobile) -->
+    <div class="chips-container">
+      <div class="chips">
+        <div class="chip ca on" id="chipA" onclick="toggleLine('A')">
+          <div class="dot" style="background:var(--green)"></div>Moderata
+        </div>
+        <div class="chip cb2 on" id="chipB" onclick="toggleLine('B')">
+          <div class="dot" style="background:var(--blue)"></div>Aggressiva
+        </div>
+        <div class="chip cbase on" id="chipBase" onclick="toggleLine('base')">
+          <div class="dot" style="background:var(--red)"></div>Baseline (no CB)
+        </div>
+        <div class="chip cga" id="chipGA" onclick="toggleLine('ga')">
+          <div class="dot" style="background:var(--teal)"></div>Ghost Mod.
+        </div>
+        <div class="chip cgb" id="chipGB" onclick="toggleLine('gb')">
+          <div class="dot" style="background:var(--purple)"></div>Ghost Agg.
+        </div>
+      </div>
+    </div>
+    <div id="chart-wrap"><canvas id="mainChart"></canvas></div>
+    <!-- DD strip -->
+    <div class="dd-row hid" id="ddStrip">
+      <div class="dd-cell"><span>Drawdown max</span><span id="ddDepth">–</span></div>
+      <div class="dd-cell"><span>Da promo</span><span id="ddStart">–</span></div>
+      <div class="dd-cell"><span>Minimo a</span><span id="ddTrough">–</span></div>
+      <div class="dd-cell"><span>Recovery</span><span id="ddRec">–</span></div>
+    </div>
+    <!-- Controls + Export -->
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:9px;align-items:center">
+      <button class="btn btn-g" id="btnZoomDD">🔍 Zoom drawdown</button>
+      <button class="btn btn-g" id="btnResetZoom">↺ Reset</button>
+      <input type="number" id="zoomStart" placeholder="Da #" min="1" style="width:80px">
+      <input type="number" id="zoomEnd" placeholder="A #" min="1" style="width:80px">
+      <button class="btn btn-g" id="btnApplyZoom">Vai</button>
+      <button class="btn btn-g" id="btnExportCSV">📄 CSV</button>
+      <button class="btn btn-g" id="btnExportExcel">📊 Excel</button>
+      <button class="btn btn-g" id="btnExportPDF">📑 PDF</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     MONTE CARLO
+══════════════════════════════════════════ -->
+<details>
+  <summary>🎲 Statistiche Monte Carlo</summary>
+  <div class="det">
+    <div class="g2" style="align-items:end">
+      <div class="fld">
+        <label class="fl">Prove</label>
+        <input type="number" id="statsTrials" value="2000" min="100" step="100">
+        <div class="hint">2.000–5.000 per stime stabili.</div>
+      </div>
+      <div>
+        <button class="btn btn-p" id="btnStats">Calcola statistiche</button>
+        <div class="hint" id="statsInfo" style="margin-top:5px"></div>
+      </div>
+    </div>
+    <div id="statsOut" class="hid" style="margin-top:12px">
+      <div style="overflow-x:auto">
+        <table class="tbl">
+          <thead><tr><th>N promo</th><th>Moderata (con CB)</th><th>Aggressiva (con CB)</th></tr></thead>
+          <tbody id="statsBody"></tbody>
+        </table>
+        <p class="hint" style="margin-top:5px">P(Σ<sub>N</sub>&gt;0) — IC Wilson 95%.</p>
+      </div>
+      <div style="overflow-x:auto;margin-top:14px">
+        <div class="slbl">Scenari Peggiori</div>
+        <table class="tbl">
+          <thead><tr><th>Strategia</th><th>Peggior TTP</th><th>TTP P95</th><th>DD peggiore</th><th>DD P95</th><th>% in profitto</th></tr></thead>
+          <tbody id="worstBody"></tbody>
+        </table>
+        <p class="hint" style="margin-top:5px">TTP = promozioni al primo saldo cumulato positivo. DD = drawdown massimo.</p>
+      </div>
+    </div>
+  </div>
+</details>
+
+<!-- ══════════════════════════════════════════
+     CONFRONTO VOLATILITÀ (slot only)
+══════════════════════════════════════════ -->
+<details id="compDet" class="hid">
+  <summary>📊 Confronto Volatilità (Bassa / Media / Alta)</summary>
+  <div class="det">
+    <p class="hint" style="padding-top:6px">Stessa RTP (<strong id="compRTPLbl" style="color:var(--cyan)">94.5%</strong>), stesso stake e spin. Cambiano solo σ e P(zero payout).</p>
+    <button class="btn btn-s" id="btnRunComp" style="margin-top:9px">▶ Esegui confronto</button>
+    <div id="compOut" class="hid">
+      <div class="slbl" style="margin-top:12px">Strategia Moderata — confronto volatilità</div>
+      <div class="comp-wrap"><canvas id="compChartA"></canvas></div>
+      <div class="slbl" style="margin-top:12px">Strategia Aggressiva — confronto volatilità</div>
+      <div class="comp-wrap"><canvas id="compChartB"></canvas></div>
+    </div>
+  </div>
+</details>
+
+<!-- ══════════════════════════════════════════
+     BREAK-EVEN RTP (slot only)
+══════════════════════════════════════════ -->
+<details id="beDet" class="hid">
+  <summary>⚖️ Break-even RTP</summary>
+  <div class="det">
+    <p class="hint" style="padding-top:6px">
+      RTP minimo affinché l'EV con cashback resti positivo, dato l'attuale setup (stake, spin, TP%, CB%).<br>
+      Stimato numericamente con 1.000 prove per punto.
+    </p>
+    <button class="btn btn-s" id="btnRunBE" style="margin-top:9px">▶ Calcola break-even</button>
+    <div id="beOut" class="hid" style="margin-top:12px">
+      <table class="tbl">
+        <thead><tr><th>Strategia</th><th>Break-even RTP</th><th>Note</th></tr></thead>
+        <tbody id="beBody"></tbody>
+      </table>
+      <div class="be-wrap"><canvas id="beChart"></canvas></div>
+      <p class="hint" style="margin-top:6px">
+        Con cashback attivo, il break-even è &lt;100%. Il valore dipende da spin, TP%, CB% e logica scelta.
+        Senza cashback il break-even è sempre esattamente 100%.
+      </p>
+    </div>
+  </div>
+</details>
+
+</div><!-- /wrap -->
+<footer>
+  Slot: RTP/σ/zeri personalizzabili &nbsp;·&nbsp; Baccarat: Tie = push &nbsp;·&nbsp; Crazy Time / Monopoly: puntata su "1"
+</footer>
+
+<script>
+"use strict";
+/* ══════════════════════════════════════════════════════
+   RNG
+══════════════════════════════════════════════════════ */
+let _rng = Math.random;
+const setRNG = fn => { _rng = fn; };
+const rng = () => _rng();
+const mulberry32 = a => () => {
+  let t = (a += 0x6d2b79f5);
+  t = Math.imul(t ^ (t >>> 15), t | 1);
+  t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+};
+const randn = () => {
+  let u=0,v=0;
+  while(!u) u=rng();
+  while(!v) v=rng();
+  return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);
+};
+
+/* ══════════════════════════════════════════════════════
+   UTILS
+══════════════════════════════════════════════════════ */
+const fmtEuro = n => {
+  try { return new Intl.NumberFormat('it-IT',{maximumFractionDigits:0}).format(n); }
+  catch { return String(Math.round(n)); }
+};
+const fmtPct = p => (p*100).toFixed(1)+'%';
+const toNum = (v, def=0) => { const x=Number(v); return isFinite(x)?x:def; };
+const clamp = (v,a,b) => Math.max(a,Math.min(b,v));
+
+function downsample(data, max=2000) {
+  if(!data || data.length <= max) return data;
+  const step = Math.ceil(data.length/max), out=[];
+  for(let i=0; i<data.length; i+=step) out.push(data[i]);
+  const last = data[data.length-1];
+  if(out[out.length-1] !== last) out.push(last);
+  return out;
+}
+function sampleDiscrete(vals, probs) {
+  const u=rng(); let acc=0;
+  for(let i=0;i<vals.length;i++){ acc+=probs[i]??0; if(u<=acc) return vals[i]; }
+  return vals[vals.length-1];
+}
+function percentile(arr, q) {
+  if(!arr.length) return 0;
+  const a=[...arr].sort((x,y)=>x-y);
+  const pos=(a.length-1)*q, base=Math.floor(pos), rest=pos-base;
+  return a[base+1]!==undefined ? a[base]+rest*(a[base+1]-a[base]) : a[base];
+}
+function wilsonCI(k, n, z=1.96) {
+  if(!n) return [0,1];
+  const p=k/n, z2=z*z, d=1+z2/n;
+  const c=(p+z2/(2*n))/d, h=(z*Math.sqrt((p*(1-p)+z2/(4*n))/n))/d;
+  return [Math.max(0,c-h), Math.min(1,c+h)];
+}
+
+/* ══════════════════════════════════════════════════════
+   CONSTANTS
+══════════════════════════════════════════════════════ */
+const BAC_P_BANKER=0.4586, BAC_P_PLAYER=0.4462, BAC_P_TIE=0.0952, BAC_COMM=0.05;
+const CRAZY   = {factors:[1,2,3,5,10,15], probs:[0.85,0.08,0.04,0.02,0.009,0.001]};
+const MONOPOLY= {factors:[1,2,3,5,10,15], probs:[0.86,0.07,0.03,0.02,0.009,0.001]};
+
+const VOL = {
+  low:  { slotSigma:0.35, slotZeroProb:0.6  },
+  med:  { slotSigma:0.7,  slotZeroProb:0.75 },
+  high: { slotSigma:1.1,  slotZeroProb:0.9  },
+};
+
+/* ══════════════════════════════════════════════════════
+   STATE
+══════════════════════════════════════════════════════ */
+const S = {
+  sessions:1000, tpPercent:25, cashbackPercent:25, pWin:18/37,
+  game:'slot', baccaratBet:'banker',
+  ctOneRTP:0.9608, ctOneSegments:21, ctWheelSegments:54,
+  monoOneRTP:0.9288, monoOneSegments:22, monoWheelSegments:54,
+  useRealisticMultipliers:true,
+  slotRTP:0.945,
+  slotSigma:1.1, slotZeroProb:0.9,
+  slotStakeMax:100,
+  spin:25,
+  slotAFixedN:4,
+  slotAScheme:'fixed',
+  slotFirstSpin:25,
+  seccoMode:'tp_or_ruin',
+  fixedMode:'tp_or_ruin',
+  showGhostFixedAlt:false,
+  showGhostSeccoAlt:false,
+  baselineStrategy:'B',
+  lockSeed:false, seed:123456789,
+  ddTarget:'B',
+  globalStopLoss:0,
+  lineA:true, lineB:true, lineBase:true, lineGA:false, lineGB:false,
+};
+
+/* ══════════════════════════════════════════════════════
+   GAME MATH
+══════════════════════════════════════════════════════ */
+function baccaratProfit(stake, bet) {
+  for(let i=0; i<200; i++) {
+    const r = rng();
+    if(r < BAC_P_TIE) continue;
+    if(bet==='banker') return r < BAC_P_TIE+BAC_P_BANKER ? stake*(1-BAC_COMM) : -stake;
+    return r < BAC_P_TIE+BAC_P_PLAYER ? stake : -stake;
+  }
+  return 0;
+}
+
+function wheelOneProfit(stake, pHit, rtp) {
+  const k = Math.max(0, rtp/Math.max(1e-9,pHit)-1);
+  return rng()<pHit ? stake*k : -stake;
+}
+
+function wheelOneProfitRealistic(stake, pHit, rtp, base) {
+  if(!(rng() < Math.max(0,Math.min(1,pHit)))) return -stake;
+  let eBns=0;
+  for(let i=0;i<base.factors.length;i++) eBns += (base.factors[i]-1)*(base.probs[i]??0);
+  const alpha = eBns>0 ? Math.max(0, rtp/Math.max(1e-9,pHit)-2)/eBns : 0;
+  const kRaw = sampleDiscrete(base.factors, base.probs);
+  return stake*(1+Math.max(0,alpha*(kRaw-1)));
+}
+
+function spinProfit(stake, p) {
+  switch(p.game) {
+    case 'roulette':
+      return rng()<p.pWin ? stake : -stake;
+    case 'slot': {
+      if(rng()<p.slotZeroProb) return -stake;
+      const tm = p.slotRTP/Math.max(1e-6,1-p.slotZeroProb);
+      const mu = Math.log(tm)-0.5*p.slotSigma*p.slotSigma;
+      return stake*Math.exp(mu+p.slotSigma*randn())-stake;
+    }
+    case 'baccarat':
+      return baccaratProfit(stake, p.baccaratBet);
+    case 'crazytime': {
+      const ph = p.ctOneSegments/Math.max(1,p.ctWheelSegments);
+      return p.useRealisticMultipliers
+        ? wheelOneProfitRealistic(stake,ph,p.ctOneRTP,CRAZY)
+        : wheelOneProfit(stake,ph,p.ctOneRTP);
+    }
+    case 'monopoly': {
+      const ph = p.monoOneSegments/Math.max(1,p.monoWheelSegments);
+      return p.useRealisticMultipliers
+        ? wheelOneProfitRealistic(stake,ph,p.monoOneRTP,MONOPOLY)
+        : wheelOneProfit(stake,ph,p.monoOneRTP);
+    }
+    default: return -stake;
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   STRATEGIES
+══════════════════════════════════════════════════════ */
+function promoSpinFisso(tpPct, cbPct, p, mode) {
+  const S0 = Math.max(1, Math.floor(p.slotStakeMax));
+  const tpAmt = (tpPct/100)*S0;
+  const f = Math.max(1, Math.min(Math.floor(p.spin), S0));
+  let profit=0;
+
+  if(mode==='turnover_once') {
+    const maxN = Math.max(1, Math.floor(S0/f));
+    const n = Math.max(1, Math.min(Math.floor(p.slotAFixedN), maxN));
+    for(let k=0; k<n; k++) {
+      profit += spinProfit(f, p);
+      if(profit >= tpAmt) break;
+    }
+  } else {
+    let balance = S0;
+    while(balance >= f && profit < tpAmt) {
+      const pr = spinProfit(f, p);
+      profit += pr;
+      balance += pr;
+      if(balance <= 0) break;
+    }
+  }
+  const cb = profit<0 ? (cbPct/100)*(-profit) : 0;
+  return { profitWithCb: profit+cb, profitNoCb: profit };
+}
+
+function promoSpinSecco(S0, tpPct, cbPct, p, mode) {
+  const tpAmt = (tpPct/100)*S0;
+  let profit=0;
+
+  if(mode==='turnover_once') {
+    profit = spinProfit(S0, p);
+  } else {
+    let balance = S0;
+    while(balance >= S0 && profit < tpAmt) {
+      const pr = spinProfit(S0, p);
+      profit += pr;
+      balance += pr;
+      if(balance <= 0) break;
+    }
+  }
+  const cb = profit<0 ? (cbPct/100)*(-profit) : 0;
+  return { profitWithCb: profit+cb, profitNoCb: profit };
+}
+
+function promoA(tpPct, cbPct, p) {
+  if(['slot','baccarat','crazytime','monopoly'].includes(p.game)) {
+    const S0 = Math.max(1, Math.floor(p.slotStakeMax));
+    const tpAmt = (tpPct/100)*S0;
+
+    if(p.slotAScheme==='adaptive') {
+      let first = Math.max(1, Math.min(Math.floor(p.slotFirstSpin), S0));
+      if(first < tpAmt) first = Math.max(1, Math.ceil(tpAmt));
+      const second = Math.max(0, S0-first);
+      let profit=0;
+      if(first>0) profit += spinProfit(first, p);
+      if(profit<tpAmt && second>0) profit += spinProfit(second, p);
+      const cb = profit<0 ? (cbPct/100)*(-profit) : 0;
+      return { profitWithCb: profit+cb, profitNoCb: profit };
+    }
+    return promoSpinFisso(tpPct, cbPct, p, p.fixedMode);
+  }
+  // Roulette
+  const tpR = (tpPct/100)*40;
+  let profit = spinProfit(10, p);
+  if(profit < tpR) profit += spinProfit(30, p);
+  const cb = profit<0 ? (cbPct/100)*(-profit) : 0;
+  return { profitWithCb: profit+cb, profitNoCb: profit };
+}
+
+function promoB(tpPct, cbPct, p, overrideMode) {
+  if(p.game==='roulette') {
+    const profit = spinProfit(40, p);
+    const cb = profit<0 ? (cbPct/100)*(-profit) : 0;
+    return { profitWithCb: profit+cb, profitNoCb: profit };
+  }
+  return promoSpinSecco(p.slotStakeMax, tpPct, cbPct, p, overrideMode ?? p.seccoMode);
+}
+
+/* ══════════════════════════════════════════════════════
+   SIMULATION (con Stop Loss Globale)
+══════════════════════════════════════════════════════ */
+function computeDD(arr) {
+  let peak=-Infinity, pkI=0, maxD=0, start=0, trI=0;
+  for(let i=0;i<arr.length;i++){
+    if(arr[i]>peak){ peak=arr[i]; pkI=i; }
+    const d=peak-arr[i];
+    if(d>maxD){ maxD=d; start=pkI; trI=i; }
+  }
+  let rec=arr.length-1;
+  const target=arr[start];
+  for(let k=trI+1; k<arr.length; k++){ if(arr[k]>=target){ rec=k; break; } }
+  return { start, trough:trI, recovery:rec, depth:maxD };
+}
+
+function simulate(p) {
+  const { sessions, tpPercent, cashbackPercent, globalStopLoss } = p;
+  let cumA=0, cumB=0, cumAno=0, cumBno=0;
+  const cumG={};
+  const data = [];
+  const stopActive = globalStopLoss > 0;
+  let stopped = false;
+
+  for(let i=0; i<sessions; i++) {
+    if(stopActive && !stopped) {
+      const minCum = Math.min(cumA, cumB);
+      if(minCum <= -globalStopLoss) {
+        stopped = true;
+      }
+    }
+
+    let a, b;
+    if(stopped) {
+      a = { profitWithCb:0, profitNoCb:0 };
+      b = { profitWithCb:0, profitNoCb:0 };
+    } else {
+      a = promoA(tpPercent, cashbackPercent, p);
+      b = promoB(tpPercent, cashbackPercent, p);
+    }
+
+    cumA += a.profitWithCb;
+    cumB += b.profitWithCb;
+    cumAno += a.profitNoCb;
+    cumBno += b.profitNoCb;
+
+    const row = { i:i+1, A:cumA, B:cumB, base: p.baselineStrategy==='A' ? cumAno : cumBno };
+
+    if(!stopped && p.game!=='roulette' && p.showGhostFixedAlt && p.slotAScheme==='fixed') {
+      const altMode = p.fixedMode==='turnover_once' ? 'tp_or_ruin' : 'turnover_once';
+      const out = promoSpinFisso(tpPercent, cashbackPercent, p, altMode);
+      cumG.GA = (cumG.GA??0) + out.profitWithCb;
+      row.GA = cumG.GA;
+    }
+    if(!stopped && p.game!=='roulette' && p.showGhostSeccoAlt) {
+      const altMode = p.seccoMode==='turnover_once' ? 'tp_or_ruin' : 'turnover_once';
+      const out = promoB(tpPercent, cashbackPercent, p, altMode);
+      cumG.GB = (cumG.GB??0) + out.profitWithCb;
+      row.GB = cumG.GB;
+    }
+    data.push(row);
+  }
+
+  const effectiveSessions = stopped ? data.length : sessions;
+  const meanA = cumA / effectiveSessions;
+  const meanB = cumB / effectiveSessions;
+
+  return {
+    data,
+    meanA, meanB,
+    ddA: computeDD(data.map(d=>d.A)),
+    ddB: computeDD(data.map(d=>d.B)),
+    stoppedEarly: stopped,
+  };
+}
+
+/* ══════════════════════════════════════════════════════
+   MONTE CARLO
+══════════════════════════════════════════════════════ */
+function computeProfitProbs(p, horizons, trials) {
+  const H = [...horizons].sort((a,b)=>a-b);
+  const maxN = H[H.length-1];
+  const cntA = new Array(H.length).fill(0);
+  const cntB = new Array(H.length).fill(0);
+  const ttpA=[], ttpB=[], ddA=[], ddB=[];
+  let rA=0, rB=0;
+  const stopActive = p.globalStopLoss > 0;
+
+  for(let t=0; t<trials; t++) {
+    let cumA=0, cumB=0, pkA=0, mxA=0, pkB=0, mxB=0, fA=null, fB=null;
+    let hIdx=0;
+    let stopped = false;
+    for(let i=0; i<maxN; i++) {
+      if(stopActive && !stopped) {
+        const minCum = Math.min(cumA, cumB);
+        if(minCum <= -p.globalStopLoss) stopped = true;
+      }
+      let a, b;
+      if(stopped) {
+        a = { profitWithCb:0 };
+        b = { profitWithCb:0 };
+      } else {
+        a = promoA(p.tpPercent, p.cashbackPercent, p);
+        b = promoB(p.tpPercent, p.cashbackPercent, p);
+      }
+      cumA += a.profitWithCb;
+      cumB += b.profitWithCb;
+      const n=i+1;
+      while(hIdx<H.length && H[hIdx]===n){
+        if(cumA>0) cntA[hIdx]++;
+        if(cumB>0) cntB[hIdx]++;
+        hIdx++;
+      }
+      if(!fA && cumA>0) fA=n;
+      if(!fB && cumB>0) fB=n;
+      if(cumA>pkA) pkA=cumA; const dA=pkA-cumA; if(dA>mxA) mxA=dA;
+      if(cumB>pkB) pkB=cumB; const dB=pkB-cumB; if(dB>mxB) mxB=dB;
+    }
+    ddA.push(mxA); ddB.push(mxB);
+    ttpA.push(fA ?? Infinity);
+    ttpB.push(fB ?? Infinity);
+    if(fA) rA++; if(fB) rB++;
+  }
+
+  const rows = H.map((N,i) => {
+    const pA=cntA[i]/trials, pB=cntB[i]/trials;
+    const se=v=>Math.sqrt(v*(1-v)/trials);
+    const [loA,hiA]=wilsonCI(cntA[i],trials);
+    const [loB,hiB]=wilsonCI(cntB[i],trials);
+    return { N, A:{p:pA,se:se(pA),lo:loA,hi:hiA}, B:{p:pB,se:se(pB),lo:loB,hi:hiB} };
+  });
+
+  const finA=ttpA.filter(x=>isFinite(x)), finB=ttpB.filter(x=>isFinite(x));
+  return {
+    trials, rows,
+    worst: {
+      A: { worstTTP:finA.length?Math.max(...finA):null, p95TTP:finA.length?percentile(finA,.95):null, worstDD:ddA.length?Math.max(...ddA):0, p95DD:percentile(ddA,.95), reached:rA/trials },
+      B: { worstTTP:finB.length?Math.max(...finB):null, p95TTP:finB.length?percentile(finB,.95):null, worstDD:ddB.length?Math.max(...ddB):0, p95DD:percentile(ddB,.95), reached:rB/trials },
+    }
+  };
+}
+
+/* ══════════════════════════════════════════════════════
+   BREAK-EVEN RTP
+══════════════════════════════════════════════════════ */
+function computeBreakEven(p, trialsPerPoint=1000) {
+  if(p.game !== 'slot') return null;
+  const grid=[];
+  for(let r=0.80; r<=1.001; r+=0.005) grid.push(Math.round(r*1000)/1000);
+  const evA=[], evB=[];
+
+  for(const rtp of grid) {
+    const pp = {...p, slotRTP:rtp};
+    let sA=0, sB=0;
+    for(let t=0; t<trialsPerPoint; t++) {
+      sA += promoA(p.tpPercent, p.cashbackPercent, pp).profitWithCb;
+      sB += promoB(p.tpPercent, p.cashbackPercent, pp).profitWithCb;
+    }
+    evA.push(sA/trialsPerPoint);
+    evB.push(sB/trialsPerPoint);
+  }
+
+  const findCrossing = arr => {
+    for(let i=0; i<arr.length-1; i++) {
+      if((arr[i]<=0 && arr[i+1]>0) || (arr[i]>=0 && arr[i+1]<0)) {
+        const t = -arr[i]/(arr[i+1]-arr[i]);
+        return grid[i]+t*(grid[i+1]-grid[i]);
+      }
+    }
+    if(arr[0]>0) return grid[0];
+    return null;
+  };
+
+  return { grid, evA, evB, beA:findCrossing(evA), beB:findCrossing(evB) };
+}
+
+/* ══════════════════════════════════════════════════════
+   VOLATILITY COMPARISON
+══════════════════════════════════════════════════════ */
+function simulateVolComparison(p) {
+  const presets = [
+    { label:'Alta (σ=1.1)', color:'#ff5060', ...VOL.high },
+    { label:'Media (σ=0.7)', color:'#e8a020', ...VOL.med  },
+    { label:'Bassa (σ=0.35)', color:'#40d070', ...VOL.low  },
+  ];
+  return presets.map(preset => {
+    const pp = {...p, ...preset};
+    setRNG(p.lockSeed ? mulberry32(p.seed+preset.label.charCodeAt(0)) : Math.random);
+    return { ...preset, data: simulate({...pp, baselineStrategy:'A'}).data };
+  });
+}
+
+/* ══════════════════════════════════════════════════════
+   CHART HELPERS
+══════════════════════════════════════════════════════ */
+let mainChart=null, cChartA=null, cChartB=null, beChart=null;
+let result=null, viewRange=null;
+
+function makeOpts(extra={}) {
+  return {
+    animation:false, responsive:true, maintainAspectRatio:false,
+    interaction:{ mode:'index', intersect:false },
+    plugins:{
+      legend:{
+        labels:{
+          color:'#7878a8', font:{family:"'JetBrains Mono',monospace",size:10},
+          boxWidth:18, padding:11, usePointStyle:true, pointStyleWidth:9
+        }
+      },
+      tooltip:{
+        backgroundColor:'#0a0a18', titleColor:'#00c8c8', bodyColor:'#9898c8',
+        borderColor:'#222238', borderWidth:1,
+        callbacks: extra.ttCallbacks || {
+          title: items => `Promo #${fmtEuro(items[0].label)}`,
+          label: ctx => `${ctx.dataset.label}: ${fmtEuro(Math.round(ctx.parsed.y))} €`
+        }
+      }
+    },
+    scales:{
+      x:{
+        ticks:{ color:'#282848', font:{family:"'JetBrains Mono',monospace",size:9}, maxTicksLimit:extra.maxX||8, callback:extra.xCb||(v=>fmtEuro(v)) },
+        grid:{ color:'#0d0d22' }, border:{ color:'#161630' }
+      },
+      y:{
+        ticks:{ color:'#282848', font:{family:"'JetBrains Mono',monospace",size:9}, callback:v=>fmtEuro(v)+'€' },
+        grid:{ color:ctx=>ctx.tick.value===0?'#3a3a70':'#0d0d22', lineWidth:ctx=>ctx.tick.value===0?1.5:1 },
+        border:{ color:'#161630' }
+      }
+    }
+  };
+}
+
+function initMainChart() {
+  if(mainChart){ mainChart.destroy(); mainChart=null; }
+  mainChart = new Chart(document.getElementById('mainChart'),{type:'line',data:{labels:[],datasets:[]},options:makeOpts()});
+}
+
+function updateMainChart() {
+  if(!result || !mainChart) return;
+  let raw = result.data;
+  if(viewRange) raw = raw.slice(viewRange[0], viewRange[1]+1);
+  const cd = downsample(raw, 2000);
+  const stepped = (S.game==='crazytime'||S.game==='monopoly') && S.useRealisticMultipliers;
+  const lopt = stepped ? {stepped:'after'} : {tension:0.12};
+  const ds = [];
+  const S0 = Math.max(1,Math.floor(S.slotStakeMax));
+
+  if(S.lineA)    ds.push({label:`Moderata (EV: ${fmtEuro(Math.round(result.meanA))}€)`,data:cd.map(d=>d.A),borderColor:'#3ecf6a',backgroundColor:'transparent',borderWidth:2,pointRadius:0,...lopt});
+  if(S.lineB)    ds.push({label:`Aggressiva (EV: ${fmtEuro(Math.round(result.meanB))}€)`,data:cd.map(d=>d.B),borderColor:'#4f8fff',backgroundColor:'transparent',borderWidth:2,pointRadius:0,...lopt});
+  if(S.lineBase) ds.push({label:'Baseline (no CB)',data:cd.map(d=>d.base),borderColor:'#ff3d5a',backgroundColor:'transparent',borderWidth:2,pointRadius:0,tension:0.12});
+  if(S.lineGA && cd[0]?.GA!==undefined)
+    ds.push({label:'Ghost Mod.',data:cd.map(d=>d.GA??null),borderColor:'#1ec890',backgroundColor:'transparent',borderWidth:1.5,borderDash:[6,4],pointRadius:0,tension:0.12});
+  if(S.lineGB && cd[0]?.GB!==undefined)
+    ds.push({label:'Ghost Agg.',data:cd.map(d=>d.GB??null),borderColor:'#a050f0',backgroundColor:'transparent',borderWidth:1.5,borderDash:[6,4],pointRadius:0,tension:0.12});
+
+  mainChart.data.labels = cd.map(d=>d.i);
+  mainChart.data.datasets = ds;
+  mainChart.update('none');
+}
+
+function initCompCharts() {
+  ['cChartA','cChartB'].forEach((varName,idx)=>{
+    const canvasId = idx===0 ? 'compChartA' : 'compChartB';
+    if(window[varName]){ window[varName].destroy(); window[varName]=null; }
+    const opts = makeOpts({maxX:6});
+    window[varName] = new Chart(document.getElementById(canvasId),{type:'line',data:{labels:[],datasets:[]},options:opts});
+  });
+  cChartA = window['cChartA'];
+  cChartB = window['cChartB'];
+}
+
+function updateCompCharts(vols) {
+  if(!cChartA || !cChartB) return;
+  const mkDS = (volRes, key) => volRes.map(vr => {
+    const cd = downsample(vr.data, 1000);
+    return { label:vr.label, data:cd.map(d=>d[key]), borderColor:vr.color, backgroundColor:'transparent', borderWidth:1.8, pointRadius:0, tension:0.12 };
+  });
+  const labels = downsample(vols[0].data, 1000).map(d=>d.i);
+  cChartA.data.labels = labels;
+  cChartA.data.datasets = mkDS(vols,'A');
+  cChartA.update('none');
+  cChartB.data.labels = labels;
+  cChartB.data.datasets = mkDS(vols,'B');
+  cChartB.update('none');
+}
+
+function initBEChart() {
+  if(beChart){ beChart.destroy(); beChart=null; }
+  const opts = makeOpts({
+    xCb: v => (v*100).toFixed(0)+'%',
+    maxX: 8,
+    ttCallbacks: {
+      title: items => `RTP: ${(Number(items[0].label)*100).toFixed(1)}%`,
+      label: ctx => `${ctx.dataset.label}: ${fmtEuro(Math.round(ctx.parsed.y))} €`
+    }
+  });
+  beChart = new Chart(document.getElementById('beChart'),{type:'line',data:{labels:[],datasets:[]},options:opts});
+}
+
+function updateBEChart(be) {
+  if(!beChart) return;
+  beChart.data.labels = be.grid;
+  beChart.data.datasets = [
+    {label:'Moderata', data:be.evA, borderColor:'#3ecf6a', backgroundColor:'transparent', borderWidth:2, pointRadius:0, tension:0.12},
+    {label:'Aggressiva', data:be.evB, borderColor:'#4f8fff', backgroundColor:'transparent', borderWidth:2, pointRadius:0, tension:0.12},
+    {label:'Zero', data:be.grid.map(()=>0), borderColor:'rgba(255,60,90,.4)', backgroundColor:'transparent', borderWidth:1, borderDash:[4,4], pointRadius:0},
+  ];
+  beChart.update('none');
+}
+
+/* ══════════════════════════════════════════════════════
+   UI HELPERS
+══════════════════════════════════════════════════════ */
+function ev(n, id) {
+  const el=document.getElementById(id);
+  el.textContent = (n>0.05?'+':'')+fmtEuro(Math.round(n))+' €';
+  el.className = 'ev-val '+(n>0.05?'pos':n<-0.05?'neg':'neu');
+}
+
+function hide(id,cond) { document.getElementById(id)?.classList.toggle('hid',cond); }
+
+function updateBadge() {
+  const S0 = Math.max(1,Math.floor(S.slotStakeMax));
+  const f = clamp(Math.floor(S.spin),1,S0);
+  const tp = Math.round((S.tpPercent/100)*S0);
+
+  let textA='', textB='';
+  if(S.game==='roulette') {
+    textA='Schema adattiva 10→30 (stake 40)';
+    textB='Spin secco 40€';
+  } else if(S.slotAScheme==='adaptive') {
+    const tpAmt=(S.tpPercent/100)*S0;
+    const fc=clamp(Math.max(Math.ceil(tpAmt),S.slotFirstSpin),1,S0);
+    textA=`Adattiva ${Math.round(fc)}→${Math.max(0,S0-Math.round(fc))}€ · stake ${S0}€`;
+  } else {
+    const mode=S.fixedMode==='tp_or_ruin'?'TP/SL':'turnover';
+    textA=`Spin ${f}€ · ${mode} · stake ${S0}€ · TP ${tp}€`;
+  }
+  if(S.game!=='roulette') {
+    const mB=S.seccoMode==='tp_or_ruin'?'TP/SL':'1 colpo';
+    textB=`Stake ${S0}€ · ${mB}`;
+  }
+  document.getElementById('badgeA').textContent=textA;
+  document.getElementById('badgeB').textContent=textB;
+}
+
+function updateSpinHint() {
+  const S0=Math.max(1,Math.floor(S.slotStakeMax));
+  const f=clamp(Math.floor(S.spin),1,S0);
+  const n=Math.floor(S0/f);
+  document.getElementById('spinHint').textContent=`${n} spin da ${f}€ = ${n*f}€ (max turnover ≤ ${S0}€)`;
+}
+
+function updateFixedNHint() {
+  const S0=Math.max(1,Math.floor(S.slotStakeMax));
+  const f=clamp(Math.floor(S.spin),1,S0);
+  const maxN=Math.max(1,Math.floor(S0/f));
+  document.getElementById('fixedNHint').textContent=`Massimo: ${maxN} (= stake/spin)`;
+  const slider = document.getElementById('slotAFixedNR');
+  slider.max = maxN;
+  let val = toNum(document.getElementById('slotAFixedN').value);
+  if(val > maxN) {
+    val = maxN;
+    document.getElementById('slotAFixedN').value = val;
+    slider.value = val;
+    S.slotAFixedN = val;
+  }
+}
+
+function updateAdaptiveHint() {
+  const S0=Math.max(1,Math.floor(S.slotStakeMax));
+  const tpAmt=(S.tpPercent/100)*S0;
+  const fc=clamp(Math.max(Math.ceil(tpAmt),S.slotFirstSpin),1,S0);
+  document.getElementById('adaptiveHint').textContent=
+    `Secondo = ${Math.max(0,S0-Math.round(fc))}€  ·  TP minimo = ${Math.round(tpAmt)}€`;
+  document.getElementById('slotFirstSpinR').max=S0;
+}
+
+function updateVolHint() {
+  const preset=S.slotSigma<=0.5?'Bassa':S.slotSigma<=0.8?'Media':'Alta';
+  document.getElementById('volHint').textContent=
+    `${preset}: σ=${S.slotSigma} · P(zero)=${S.slotZeroProb} · RTP ${(S.slotRTP*100).toFixed(1)}% invariato`;
+}
+
+function highlightPreset() {
+  ['presetLow','presetMed','presetHigh'].forEach(id=>{
+    const btn=document.getElementById(id);
+    if(!btn) return;
+    btn.style.borderColor='';btn.style.color='';
+  });
+  const preset=S.slotSigma<=0.5?'presetLow':S.slotSigma<=0.8?'presetMed':'presetHigh';
+  const b=document.getElementById(preset);
+  if(b){b.style.borderColor='var(--bdr2)';b.style.color='var(--text)';}
+}
+
+function updateVisibility() {
+  const live=S.game!=='roulette';
+  const isSlot=S.game==='slot';
+  hide('stakeField',!live); hide('spinField',!live);
+  hide('rtpRow',!isSlot); hide('volRow',!isSlot);
+  hide('rouletteRow',live);
+  hide('slotAdv',!isSlot); hide('bacAdv',S.game!=='baccarat');
+  hide('ctAdv',S.game!=='crazytime'&&S.game!=='monopoly');
+  hide('compDet',!isSlot); hide('beDet',!isSlot);
+  hide('fixedNRow',S.fixedMode!=='turnover_once');
+  hide('adaptiveRow',S.slotAScheme!=='adaptive');
+  if(S.game==='crazytime'){
+    document.getElementById('ctOneRTP').value=S.ctOneRTP;
+    document.getElementById('ctOneSegments').value=S.ctOneSegments;
+    document.getElementById('ctWheelSegments').value=S.ctWheelSegments;
+  } else if(S.game==='monopoly'){
+    document.getElementById('ctOneRTP').value=S.monoOneRTP;
+    document.getElementById('ctOneSegments').value=S.monoOneSegments;
+    document.getElementById('ctWheelSegments').value=S.monoWheelSegments;
+  }
+}
+
+function updateDDStrip() {
+  if(!result) return;
+  const dd = S.ddTarget==='A' ? result.ddA : result.ddB;
+  document.getElementById('ddStrip').classList.remove('hid');
+  document.getElementById('ddDepth').textContent=fmtEuro(Math.round(dd.depth))+'€';
+  document.getElementById('ddStart').textContent='#'+(dd.start+1);
+  document.getElementById('ddTrough').textContent='#'+(dd.trough+1);
+  document.getElementById('ddRec').textContent='#'+(dd.recovery+1);
+}
+
+function toggleLine(key) {
+  const map={A:'lineA',B:'lineB',base:'lineBase',ga:'lineGA',gb:'lineGB'};
+  const cmap={A:'chipA',B:'chipB',base:'chipBase',ga:'chipGA',gb:'chipGB'};
+  if(!map[key]) return;
+  S[map[key]]=!S[map[key]];
+  document.getElementById(cmap[key])?.classList.toggle('on',S[map[key]]);
+  updateMainChart();
+}
+
+/* ══════════════════════════════════════════════════════
+   EXPORT CSV / EXCEL / PDF
+══════════════════════════════════════════════════════ */
+function getChartBase64(chart) {
+  return chart?.canvas?.toDataURL('image/png') || '';
+}
+
+function exportCSV() {
+  if(!result) return;
+  const data = result.data;
+  let csv = "Promozione,Moderata (€),Aggressiva (€),Baseline (€)";
+  if(data[0]?.GA !== undefined) csv += ",Ghost Moderata (€)";
+  if(data[0]?.GB !== undefined) csv += ",Ghost Aggressiva (€)";
+  csv += "\n";
+  for(const row of data) {
+    csv += `${row.i},${Math.round(row.A)},${Math.round(row.B)},${Math.round(row.base)}`;
+    if(row.GA !== undefined) csv += `,${Math.round(row.GA)}`;
+    if(row.GB !== undefined) csv += `,${Math.round(row.GB)}`;
+    csv += "\n";
+  }
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "simulazione_cashback.csv";
+  link.click();
+  URL.revokeObjectURL(link.href);
+}
+
+function exportExcel() {
+  if(!result) return;
+  const data = result.data;
+  const wsData = [['Promozione','Moderata (€)','Aggressiva (€)','Baseline (€)']];
+  if(data[0]?.GA !== undefined) wsData[0].push('Ghost Moderata (€)');
+  if(data[0]?.GB !== undefined) wsData[0].push('Ghost Aggressiva (€)');
+  for(const row of data) {
+    const r = [row.i, Math.round(row.A), Math.round(row.B), Math.round(row.base)];
+    if(row.GA !== undefined) r.push(Math.round(row.GA));
+    if(row.GB !== undefined) r.push(Math.round(row.GB));
+    wsData.push(r);
+  }
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+  XLSX.utils.book_append_sheet(wb, ws, "Simulazione");
+  XLSX.writeFile(wb, "simulazione_cashback.xlsx");
+}
+
+async function exportPDF() {
+  if(!result || !mainChart) return;
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+  
+  // Titolo
+  pdf.setFontSize(16);
+  pdf.setTextColor(0, 200, 200);
+  pdf.text("Simulatore Promozioni Cashback", 15, 20);
+  
+  // Parametri principali
+  pdf.setFontSize(10);
+  pdf.setTextColor(80, 80, 120);
+  const params = [
+    `Gioco: ${S.game} | Promo: ${S.sessions} | Cashback: ${S.cashbackPercent}% | TP: ${S.tpPercent}%`,
+    `Stake max: ${S.slotStakeMax}€ | Spin: ${S.spin}€ | RTP slot: ${(S.slotRTP*100).toFixed(1)}%`,
+    `EV Moderata: ${fmtEuro(Math.round(result.meanA))}€ | EV Aggressiva: ${fmtEuro(Math.round(result.meanB))}€`
+  ];
+  pdf.text(params[0], 15, 30);
+  pdf.text(params[1], 15, 37);
+  pdf.text(params[2], 15, 44);
+  
+  // Grafico principale
+  const chartImg = getChartBase64(mainChart);
+  if(chartImg) {
+    pdf.addImage(chartImg, 'PNG', 15, 52, 270, 120);
+  }
+  
+  // Drawdown info
+  const dd = S.ddTarget==='A' ? result.ddA : result.ddB;
+  pdf.setFontSize(9);
+  pdf.text(`Drawdown max (${S.ddTarget==='A'?'Moderata':'Aggressiva'}): ${fmtEuro(Math.round(dd.depth))}€ | Da promo #${dd.start+1} a #${dd.trough+1} | Recovery a #${dd.recovery+1}`, 15, 185);
+  
+  // Statistiche Monte Carlo (se visibili)
+  if(!document.getElementById('statsOut').classList.contains('hid')) {
+    pdf.addPage();
+    pdf.setFontSize(14);
+    pdf.text("Statistiche Monte Carlo", 15, 20);
+    // ... (si potrebbe aggiungere la tabella ma è complesso, per ora solo testo)
+    pdf.setFontSize(10);
+    pdf.text("Vedi esportazione CSV/Excel per i dettagli completi.", 15, 30);
+  }
+  
+  pdf.save('report_cashback.pdf');
+}
+
+/* ══════════════════════════════════════════════════════
+   MAIN RUN
+══════════════════════════════════════════════════════ */
+let _deb=null;
+function run() {
+  setRNG(S.lockSeed ? mulberry32(S.seed) : Math.random);
+  result = simulate(S);
+  ev(result.meanA,'evA');
+  ev(result.meanB,'evB');
+  updateMainChart();
+  updateBadge();
+  updateSpinHint();
+  updateFixedNHint();
+  updateAdaptiveHint();
+  updateVolHint();
+  updateDDStrip();
+  highlightPreset();
+  document.getElementById('compRTPLbl').textContent=(S.slotRTP*100).toFixed(1)+'%';
+  if(result.stoppedEarly) {
+    console.warn(`Simulazione interrotta per stop loss globale a ${-S.globalStopLoss}€`);
+  }
+}
+function sched(){ clearTimeout(_deb); _deb=setTimeout(run,260); }
+
+/* ══════════════════════════════════════════════════════
+   EVENT LISTENERS
+══════════════════════════════════════════════════════ */
+const $ = id => document.getElementById(id);
+
+function onN(id,fn){ $(id)?.addEventListener('change',e=>{fn(toNum(e.target.value));sched();}); }
+function onS(id,fn){ $(id)?.addEventListener('change',e=>{fn(e.target.value);sched();}); }
+function onC(id,fn){ $(id)?.addEventListener('change',e=>{fn(e.target.checked);sched();}); }
+function pair(nId,rId,fn){
+  const upd=v=>{fn(v);$(nId).value=v;$(rId).value=v;sched();};
+  $(nId)?.addEventListener('change',e=>upd(toNum(e.target.value)));
+  $(rId)?.addEventListener('input',e=>upd(toNum(e.target.value)));
+}
+
+onS('game', v=>{S.game=v; updateVisibility();});
+onN('sessions', v=>{S.sessions=Math.max(100,Math.floor(v));});
+onN('cashbackPercent', v=>{S.cashbackPercent=clamp(v,0,100);});
+onN('tpPercent', v=>{S.tpPercent=clamp(v,0,200);});
+onN('globalStopLoss', v=>{S.globalStopLoss=Math.max(0,Math.floor(v));});
+onN('slotStakeMax', v=>{
+  S.slotStakeMax=Math.max(1,Math.floor(v));
+  S.spin=clamp(S.spin,1,S.slotStakeMax);
+  $('spin').value=S.spin;
+  updateVisibility();
+  updateFixedNHint(); // BUGFIX
+});
+onN('spin', v=>{
+  S.spin=clamp(Math.floor(v),1,Math.max(1,S.slotStakeMax));
+  $('spin').value=S.spin;
+  updateFixedNHint(); // BUGFIX
+});
+onN('slotRTP', v=>{S.slotRTP=clamp(v,80,100)/100;});
+onN('slotSigma', v=>{S.slotSigma=clamp(v,0.05,3);});
+onN('slotZeroProb', v=>{S.slotZeroProb=clamp(v,0,0.99);});
+onN('pWin', v=>{S.pWin=clamp(v,0,1);});
+onS('baccaratBet', v=>{S.baccaratBet=v;});
+onS('slotAScheme', v=>{S.slotAScheme=v; updateVisibility();});
+onS('fixedMode', v=>{S.fixedMode=v; updateVisibility();});
+onS('seccoMode', v=>{S.seccoMode=v;});
+onS('baselineStrategy', v=>{S.baselineStrategy=v;});
+onS('ddTarget', v=>{S.ddTarget=v; updateDDStrip();});
+onC('useRealisticMultipliers', v=>{S.useRealisticMultipliers=v;});
+onC('chkGhostA', v=>{S.showGhostFixedAlt=v;});
+onC('chkGhostB', v=>{S.showGhostSeccoAlt=v;});
+onC('lockSeed', v=>{S.lockSeed=v;});
+onN('seed', v=>{S.seed=Math.floor(v);});
+
+pair('slotAFixedN','slotAFixedNR', v=>{
+  const S0=Math.max(1,Math.floor(S.slotStakeMax));
+  const f=clamp(Math.floor(S.spin),1,S0);
+  S.slotAFixedN=clamp(Math.floor(v),1,Math.max(1,Math.floor(S0/f)));
+  updateFixedNHint();
+});
+pair('slotFirstSpin','slotFirstSpinR', v=>{
+  S.slotFirstSpin=clamp(Math.floor(v),1,Math.max(1,S.slotStakeMax));
+  updateAdaptiveHint();
+});
+
+$('ctOneRTP')?.addEventListener('change',e=>{
+  const v=toNum(e.target.value);
+  if(S.game==='crazytime') S.ctOneRTP=v; else S.monoOneRTP=v; sched();
+});
+$('ctOneSegments')?.addEventListener('change',e=>{
+  const v=Math.max(1,Math.floor(toNum(e.target.value)));
+  if(S.game==='crazytime') S.ctOneSegments=v; else S.monoOneSegments=v; sched();
+});
+$('ctWheelSegments')?.addEventListener('change',e=>{
+  const v=Math.max(1,Math.floor(toNum(e.target.value)));
+  if(S.game==='crazytime') S.ctWheelSegments=v; else S.monoWheelSegments=v; sched();
+});
+
+$('presetLow')?.addEventListener('click',()=>{Object.assign(S,VOL.low);$('slotSigma').value=S.slotSigma;$('slotZeroProb').value=S.slotZeroProb;updateVolHint();highlightPreset();sched();});
+$('presetMed')?.addEventListener('click',()=>{Object.assign(S,VOL.med);$('slotSigma').value=S.slotSigma;$('slotZeroProb').value=S.slotZeroProb;updateVolHint();highlightPreset();sched();});
+$('presetHigh')?.addEventListener('click',()=>{Object.assign(S,VOL.high);$('slotSigma').value=S.slotSigma;$('slotZeroProb').value=S.slotZeroProb;updateVolHint();highlightPreset();sched();});
+
+$('btnRefresh')?.addEventListener('click',()=>{S.lockSeed=false;$('lockSeed').checked=false;setRNG(Math.random);run();});
+$('btnRecalc')?.addEventListener('click',run);
+
+$('btnExportCSV')?.addEventListener('click',exportCSV);
+$('btnExportExcel')?.addEventListener('click',exportExcel);
+$('btnExportPDF')?.addEventListener('click',exportPDF);
+
+$('btnZoomDD')?.addEventListener('click',()=>{
+  if(!result) return;
+  const dd = S.ddTarget==='A' ? result.ddA : result.ddB;
+  viewRange=[Math.max(0,dd.start-20),Math.min(S.sessions-1,dd.recovery+20)];
+  $('zoomStart').value=viewRange[0]+1; $('zoomEnd').value=viewRange[1]+1;
+  updateMainChart();
+});
+$('btnResetZoom')?.addEventListener('click',()=>{
+  viewRange=null; $('zoomStart').value=''; $('zoomEnd').value=''; updateMainChart();
+});
+$('btnApplyZoom')?.addEventListener('click',()=>{
+  const s=Math.max(0,Math.floor(toNum($('zoomStart').value,1))-1);
+  const e=Math.min(S.sessions-1,Math.floor(toNum($('zoomEnd').value,S.sessions))-1);
+  if(e>s){viewRange=[s,e];updateMainChart();}
+});
+
+$('btnStats')?.addEventListener('click',()=>{
+  const btn=$('btnStats'), trials=Math.max(100,Math.floor(toNum($('statsTrials').value,2000)));
+  btn.disabled=true; btn.innerHTML='<div class="spin-ani"></div> Calcolo…';
+  setTimeout(()=>{
+    setRNG(S.lockSeed?mulberry32(S.seed):Math.random);
+    const st=computeProfitProbs(S,[10,100,250,500,750,1000,1500,2000,3500,5000],trials);
+    renderStats(st);
+    btn.disabled=false; btn.textContent='Calcola statistiche';
+  },10);
+});
+
+$('btnRunComp')?.addEventListener('click',()=>{
+  const btn=$('btnRunComp');
+  btn.disabled=true; btn.innerHTML='<div class="spin-ani"></div> In corso…';
+  setTimeout(()=>{
+    initCompCharts();
+    const vols=simulateVolComparison(S);
+    updateCompCharts(vols);
+    $('compOut').classList.remove('hid');
+    btn.disabled=false; btn.textContent='▶ Esegui confronto';
+  },10);
+});
+
+$('btnRunBE')?.addEventListener('click',()=>{
+  const btn=$('btnRunBE');
+  btn.disabled=true; btn.innerHTML='<div class="spin-ani"></div> Calcolo…';
+  setTimeout(()=>{
+    initBEChart();
+    setRNG(S.lockSeed?mulberry32(S.seed):Math.random);
+    const be=computeBreakEven(S,1000);
+    if(be){renderBE(be); updateBEChart(be); $('beOut').classList.remove('hid');}
+    btn.disabled=false; btn.textContent='▶ Calcola break-even';
+  },10);
+});
+
+/* ══════════════════════════════════════════════════════
+   RENDER: STATS
+══════════════════════════════════════════════════════ */
+function renderStats(st) {
+  $('statsInfo').textContent=`${fmtEuro(st.trials)} prove.`;
+  $('statsOut').classList.remove('hid');
+  const tbody=$('statsBody'); tbody.innerHTML='';
+  for(const r of st.rows){
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${fmtEuro(r.N)}</td>
+      <td>${fmtPct(r.A.p)} <span class="td-dim">SE ${fmtPct(r.A.se)} · IC95% ${fmtPct(r.A.lo)}–${fmtPct(r.A.hi)}</span></td>
+      <td>${fmtPct(r.B.p)} <span class="td-dim">SE ${fmtPct(r.B.se)} · IC95% ${fmtPct(r.B.lo)}–${fmtPct(r.B.hi)}</span></td>`;
+    tbody.appendChild(tr);
+  }
+  const wbody=$('worstBody'); wbody.innerHTML='';
+  for(const [key,lbl] of [['A','Moderata'],['B','Aggressiva']]){
+    const w=st.worst[key];
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${lbl}</td>
+      <td>${w.worstTTP?fmtEuro(w.worstTTP)+' p.':'mai'}</td>
+      <td>${w.p95TTP?fmtEuro(Math.round(w.p95TTP))+' p.':'–'}</td>
+      <td>${fmtEuro(Math.round(w.worstDD))}€</td>
+      <td>${fmtEuro(Math.round(w.p95DD))}€</td>
+      <td>${fmtPct(w.reached)}</td>`;
+    wbody.appendChild(tr);
+  }
+}
+
+function renderBE(be) {
+  const tbody=$('beBody'); tbody.innerHTML='';
+  const rows=[
+    {label:'Moderata',be:be.beA},
+    {label:'Aggressiva',be:be.beB},
+    {label:'Senza cashback',be:1.0,fixed:true},
+  ];
+  for(const r of rows){
+    const tr=document.createElement('tr');
+    const bePct = r.be!==null ? (r.be*100).toFixed(2)+'%' : 'sempre EV–';
+    const cls   = r.be!==null && r.be<1 ? 'be-pos' : 'be-neg';
+    const note  = r.fixed ? 'Senza CB il break-even è sempre RTP=100%'
+                : r.be!==null ? `EV+ con CB ${S.cashbackPercent}% se RTP ≥ ${(r.be*100).toFixed(1)}%`
+                : 'Questa strategia risulta sempre EV– in questo setup';
+    tr.innerHTML=`<td>${r.label}</td>
+      <td class="${cls}" style="font-family:'JetBrains Mono',monospace;font-weight:500">${bePct}</td>
+      <td class="hint">${note}</td>`;
+    tbody.appendChild(tr);
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   INIT
+══════════════════════════════════════════════════════ */
+initMainChart();
+updateVisibility();
+updateSpinHint();
+updateFixedNHint();
+updateAdaptiveHint();
+updateVolHint();
+highlightPreset();
+run();
+</script>
+</body>
+</html>
